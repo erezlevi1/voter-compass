@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מצפן הבוחר · סדר את הראש לפני הבחירות</title>
+<meta name="description" content="כלי עצמאי ונייטרלי שעוזר למצביע הממוצע להבין את המפלגות, את הנושאים, ולמצוא איפה הוא עומד, לקראת בחירות 2026." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;800;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#FBF9F4; --paper-2:#F4F1E9; --ink:#1A1714; --ink-2:#4A453E; --ink-3:#7A736A;
+  --line:#E2DCD0; --line-2:#D2CABB; --surface:#FFFFFF; --surface-2:#F7F4EC;
+  --accent:#1F4E46; --accent-soft:#E7EFEC; --breaking:#B3261E; --gold:#9A7B2E; --good:#2A8C58;
+  --shadow:0 1px 2px rgba(26,23,20,.04),0 8px 24px rgba(26,23,20,.06);
+  --shadow-lg:0 4px 12px rgba(26,23,20,.08),0 24px 48px rgba(26,23,20,.10);
+  --radius:14px; --radius-sm:10px; --radius-lg:22px; --maxw:1180px;
+  --serif:"Frank Ruhl Libre",Georgia,serif; --sans:"Heebo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --t-fast:140ms cubic-bezier(.4,0,.2,1); --t:220ms cubic-bezier(.4,0,.2,1); --t-slow:420ms cubic-bezier(.16,1,.3,1);
+}
+[data-theme="dark"]{
+  --paper:#15140F; --paper-2:#1C1A14; --ink:#F2EEE4; --ink-2:#C2BBAC; --ink-3:#8C8576;
+  --line:#2C2A22; --line-2:#3A372D; --surface:#1E1C16; --surface-2:#23211A;
+  --accent:#6FBFAE; --accent-soft:#1E2A27; --breaking:#E5645C; --gold:#C9A75A; --good:#5BBF86;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg:0 4px 12px rgba(0,0,0,.4),0 24px 48px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+::selection{background:var(--accent);color:#fff}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:4px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:clamp(18px,4vw,40px);width:100%}
+h1,h2,h3{font-family:var(--serif);font-weight:800;line-height:1.1;letter-spacing:-.01em}
+.eyebrow{font-family:var(--sans);font-weight:600;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.kicker{font-family:var(--serif);font-weight:700;font-size:.92rem;color:var(--ink-3)}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.topbar-inner{display:flex;align-items:center;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--serif);font-weight:900;font-size:1.18rem;letter-spacing:-.02em;white-space:nowrap}
+.brand .mark{width:30px;height:30px;flex:0 0 auto;color:var(--accent)}
+.nav{display:flex;gap:3px;margin-inline-start:auto}
+.nav a{position:relative;padding:9px 13px;border-radius:9px;font-weight:500;font-size:.94rem;color:var(--ink-2);transition:color var(--t),background var(--t)}
+.nav a:hover{color:var(--ink);background:var(--surface-2)}
+.nav a.active{color:var(--accent);font-weight:600}
+.nav a.active::after{content:"";position:absolute;inset-inline:13px;bottom:3px;height:2px;border-radius:2px;background:var(--accent)}
+.iconbtn{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;color:var(--ink-2);transition:background var(--t),color var(--t)}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.iconbtn svg{width:20px;height:20px}
+.nav-toggle{display:none}
+@media (max-width:880px){
+  .nav{position:fixed;inset:62px 0 auto 0;flex-direction:column;gap:2px;background:var(--paper);border-bottom:1px solid var(--line);padding:10px clamp(18px,4vw,40px) 16px;margin:0;transform:translateY(-12px);opacity:0;pointer-events:none;transition:var(--t);z-index:99}
+  .nav.open{transform:none;opacity:1;pointer-events:auto}
+  .nav a{padding:12px 14px}
+  .nav-toggle{display:grid}
+}
+
+/* LAYOUT */
+main{flex:1}
+.view{animation:viewIn .42s var(--t-slow) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.page{padding:clamp(36px,6vw,72px) 0}
+.page-head{max-width:64ch;margin-bottom:clamp(26px,5vw,44px)}
+.page-head h1{font-size:clamp(2.1rem,5.5vw,3.4rem);margin-top:10px}
+.page-head h2{font-size:clamp(2rem,5vw,3rem);margin-top:8px}
+.page-head p{color:var(--ink-2);font-size:1.08rem;margin-top:14px;font-family:var(--serif);line-height:1.5}
+.breadcrumb{display:inline-flex;align-items:center;gap:7px;font-size:.9rem;color:var(--ink-3);font-weight:500;margin-bottom:18px;transition:color var(--t)}
+.breadcrumb:hover{color:var(--accent)}
+.breadcrumb svg{width:16px;height:16px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:999px;font-weight:600;font-size:1rem;transition:transform var(--t-fast),box-shadow var(--t),background var(--t),border-color var(--t);will-change:transform}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:var(--shadow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{background:var(--surface);border:1px solid var(--line-2);color:var(--ink)}
+.btn-ghost:hover{transform:translateY(-2px);background:var(--surface-2);box-shadow:var(--shadow)}
+.btn-sm{padding:9px 17px;font-size:.9rem}
+
+/* HERO */
+.hero{padding:clamp(36px,6vw,76px) 0 clamp(26px,4vw,44px);border-bottom:3px double var(--line-2)}
+.dateline{display:flex;flex-wrap:wrap;align-items:center;gap:9px 16px;font-size:.82rem;color:var(--ink-3);font-weight:500;padding-bottom:18px;margin-bottom:28px;border-bottom:1px solid var(--line)}
+.dateline .live{display:inline-flex;align-items:center;gap:7px;color:var(--breaking);font-weight:600}
+.dateline .dot{width:8px;height:8px;border-radius:50%;background:var(--breaking);animation:pulse 2.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--breaking) 55%,transparent)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.hero h1{font-size:clamp(2.6rem,8vw,5.4rem);font-weight:900;letter-spacing:-.03em;max-width:15ch}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lede{font-family:var(--serif);font-weight:500;font-size:clamp(1.15rem,2.4vw,1.55rem);color:var(--ink-2);max-width:46ch;margin-top:20px;line-height:1.45}
+.hero-actions{display:flex;flex-wrap:wrap;gap:13px;margin-top:30px}
+
+/* HOME NAV CARDS */
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:46px}
+.home-card{display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);transition:transform var(--t),box-shadow var(--t),border-color var(--t)}
+.home-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
+.home-card .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.home-card .ic svg{width:23px;height:23px}
+.home-card h3{font-size:1.3rem}
+.home-card p{color:var(--ink-2);font-size:.94rem;line-height:1.5;flex:1}
+.home-card .go{font-size:.88rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px}
+
+/* GRIDS */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.issue{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px 24px;transition:transform var(--t),box-shadow var(--t),border-color var(--t)}
+.issue:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
+.issue .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-bottom:16px}
+.issue .ic svg{width:23px;height:23px}
+.issue h3{font-size:1.28rem;margin-bottom:9px}
+.issue p{color:var(--ink-2);font-size:.96rem;line-height:1.55}
+.issue .camps{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.tag{font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}
+
+/* PARTIES */
+.filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:26px}
+.chip{padding:9px 17px;border-radius:999px;font-weight:500;font-size:.92rem;background:var(--surface);border:1px solid var(--line-2);color:var(--ink-2);transition:var(--t)}
+.chip:hover{border-color:var(--accent);color:var(--ink)}
+.chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.party{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--t),box-shadow var(--t);cursor:pointer;position:relative;text-align:start}
+.party:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.party-top{display:flex;align-items:flex-start;gap:14px;padding:22px 22px 14px}
+.party-badge{width:48px;height:48px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:1.25rem;color:#fff}
+.party-top h3{font-size:1.3rem;line-height:1.1}
+.party-top .leader{font-size:.9rem;color:var(--ink-3);margin-top:3px;font-weight:500}
+.party-bloc{font-size:.74rem;font-weight:600;letter-spacing:.04em;padding:3px 9px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);margin-top:8px;display:inline-block}
+.party-body{padding:0 22px 18px;flex:1;display:flex;flex-direction:column}
+.party-essence{font-family:var(--serif);font-size:1rem;color:var(--ink-2);line-height:1.5;margin-bottom:16px}
+.party-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
+.seats{display:flex;align-items:baseline;gap:7px}
+.seats .num{font-family:var(--serif);font-weight:900;font-size:1.5rem;color:var(--ink)}
+.seats .lab{font-size:.78rem;color:var(--ink-3)}
+.party .more{font-size:.86rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px}
+.party.new::before{content:"רשימה חדשה · 2026";position:absolute;top:14px;inset-inline-start:14px;font-size:.66rem;font-weight:700;letter-spacing:.04em;background:var(--gold);color:#fff;padding:3px 9px;border-radius:6px;z-index:1}
+
+/* PARTY DETAIL */
+.pd-hero{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;padding:28px;border-radius:var(--radius-lg);color:#fff;position:relative;overflow:hidden;margin-bottom:30px}
+.pd-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.05),rgba(0,0,0,.32))}
+.pd-hero>*{position:relative;z-index:1}
+.pd-badge{width:74px;height:74px;border-radius:18px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:2rem;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(4px)}
+.pd-hero h1{font-size:clamp(2rem,5vw,2.9rem);color:#fff}
+.pd-hero .leader{font-size:1.05rem;opacity:.95;margin-top:4px;font-weight:500}
+.pd-hero .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pd-pill{font-size:.8rem;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35)}
+.pd-cols{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:start}
+@media (max-width:820px){.pd-cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.panel h3{font-size:1.35rem;margin-bottom:6px}
+.panel .sub{font-size:.86rem;color:var(--ink-3);margin-bottom:18px}
+.status-note{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius-sm);padding:14px 16px;font-size:.92rem;color:var(--ink);line-height:1.5;margin-bottom:22px;display:flex;gap:11px}
+.status-note svg{width:19px;height:19px;flex:0 0 auto;color:var(--accent);margin-top:2px}
+.cand{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.cand:last-child{border-bottom:none}
+.cand .av{width:42px;height:42px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:1rem;color:#fff;background:var(--ink-3)}
+.cand .nm{font-weight:600;font-size:1.02rem}
+.cand .rl{font-size:.9rem;color:var(--ink-2);line-height:1.45;margin-top:2px}
+.stance-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.stance-row:last-child{border-bottom:none}
+.stance-row .q{flex:1;font-size:.93rem;color:var(--ink-2)}
+.stance-pill{font-size:.76rem;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+/* סקלת עמדות נייטרלית: כחול↔אפור↔ענבר (בלי קידוד טוב/רע) */
+.sp2{background:#2c5f8a;color:#fff}.sp1{background:#d4e3ef;color:#1f4566}.sp0{background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line)}
+.spn1{background:#efe1c5;color:#785a1c}.spn2{background:#9a6a1e;color:#fff}
+[data-theme="dark"] .sp1{background:#1d2e3e;color:#a9cde8}[data-theme="dark"] .spn1{background:#332a18;color:#e0c489}
+
+/* QUIZ */
+.quiz{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);max-width:860px}
+.quiz-bar{height:5px;background:var(--surface-2)}
+.quiz-bar i{display:block;height:100%;background:var(--accent);width:100%;transform:scaleX(0);transform-origin:right;transition:transform var(--t-slow)}
+.quiz-inner{padding:clamp(24px,4.5vw,44px)}
+.q-step{font-size:.82rem;font-weight:600;color:var(--accent);letter-spacing:.06em}
+.q-topic{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--line);padding:4px 11px;border-radius:999px;margin:14px 0 4px}
+.q-text{font-family:var(--serif);font-weight:700;font-size:clamp(1.45rem,3.4vw,2.05rem);line-height:1.25;margin:10px 0 26px;max-width:26ch}
+.q-options{display:grid;gap:11px;max-width:560px}
+.q-opt{display:flex;align-items:center;gap:14px;padding:15px 19px;border-radius:var(--radius-sm);border:1.5px solid var(--line-2);background:var(--paper);font-weight:500;font-size:1.04rem;text-align:start;transition:var(--t);width:100%}
+.q-opt:hover{border-color:var(--accent);transform:translateX(-3px)}
+.q-opt .rb{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);flex:0 0 auto;display:grid;place-items:center;transition:var(--t)}
+.q-opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.q-opt.sel .rb{border-color:var(--accent);background:var(--accent)}
+.q-opt.sel .rb::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.q-imp{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:.92rem;color:var(--ink-2)}
+.switch{position:relative;width:46px;height:26px;border-radius:999px;background:var(--line-2);transition:var(--t);flex:0 0 auto}
+.switch.on{background:var(--accent)}
+.switch i{position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:var(--t);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch.on i{inset-inline-end:23px}
+.q-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:28px;flex-wrap:wrap}
+.q-nav .txtbtn{font-weight:500;color:var(--ink-3);padding:10px 8px;transition:color var(--t)}
+.q-nav .txtbtn:hover{color:var(--ink)}
+.q-nav .txtbtn[disabled]{opacity:.35;pointer-events:none}
+.results-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:start;margin-top:8px}
+@media (max-width:820px){.results-grid{grid-template-columns:1fr}}
+.match-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.match-row .badge{width:38px;height:38px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:900;font-size:1rem}
+.match-row .info{flex:1;min-width:0}
+.match-row .nm{font-weight:600;font-size:1rem;display:flex;justify-content:space-between;gap:10px}
+.match-row .nm .pct{font-family:var(--serif);font-weight:900;color:var(--accent)}
+.match-row .track{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.match-row .track i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:right;transition:transform .9s var(--t-slow)}
+.compass-card{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+.compass-card h4{font-family:var(--serif);font-size:1.2rem;margin-bottom:4px}
+.compass-card p{font-size:.85rem;color:var(--ink-3);margin-bottom:14px}
+#compass{width:100%;height:auto;display:block}
+
+/* NEWS + POLLS */
+.news-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.news-status{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--ink-3);font-weight:500}
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.news-card{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 21px;transition:transform var(--t),box-shadow var(--t),border-color var(--t)}
+.news-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
+.news-card .meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;font-size:.78rem;color:var(--ink-3);font-weight:500}
+.news-card .src{color:var(--accent);font-weight:600}
+.news-card .when{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.news-card .rel{opacity:.7}
+.news-card .rel::before{content:"·";margin-inline-end:7px}
+.news-card h3{font-family:var(--serif);font-size:1.1rem;font-weight:700;line-height:1.32}
+.news-card .go{margin-top:auto;font-size:.84rem;font-weight:600;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px;transition:color var(--t)}
+.news-card:hover .go{color:var(--accent)}
+.skel{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);height:148px}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ink) 6%,transparent),transparent);transform:translateX(100%);animation:shimmer 1.4s infinite}
+@keyframes shimmer{to{transform:translateX(-100%)}}
+.spin{width:15px;height:15px;border:2px solid var(--line-2);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.poll{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px}
+.poll-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.poll-hd .pollster{font-weight:700;font-size:1.05rem}
+.poll-hd .date{font-size:.82rem;color:var(--ink-3);font-weight:500}
+.poll .summary{font-family:var(--serif);color:var(--ink-2);font-size:1rem;margin:6px 0 14px;line-height:1.4}
+.pbar{display:flex;align-items:center;gap:10px;margin:8px 0}
+.pbar .nm{width:96px;flex:0 0 auto;font-size:.86rem;font-weight:500;color:var(--ink-2)}
+.pbar .track{flex:1;height:22px;border-radius:7px;background:var(--surface-2);overflow:hidden;position:relative}
+.pbar .track i{display:block;height:100%;border-radius:7px}
+.pbar .val{width:34px;flex:0 0 auto;font-family:var(--serif);font-weight:900;font-size:1.05rem;text-align:start}
+.poll a.src-link{font-size:.84rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px;margin-top:8px}
+
+/* TICKER (פס חדשות רץ) */
+.ticker{position:relative;display:flex;align-items:stretch;background:#C42A1C;color:#fff;height:46px;overflow:hidden;border-bottom:1px solid rgba(0,0,0,.18)}
+.ticker-label{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;padding:0 16px;background:#9E1F13;font-weight:700;font-size:.82rem;letter-spacing:.04em;white-space:nowrap;z-index:2}
+.ticker-label .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 2.2s infinite}
+.ticker-viewport{flex:1;overflow:hidden;position:relative;direction:ltr;display:flex;align-items:center;-webkit-mask-image:linear-gradient(to right,transparent,#000 42px,#000 calc(100% - 42px),transparent);mask-image:linear-gradient(to right,transparent,#000 42px,#000 calc(100% - 42px),transparent)}
+.ticker-track{display:flex;align-items:center;width:max-content;animation:ticker 50s linear infinite;will-change:transform}
+.ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
+.ticker-item{display:inline-flex;align-items:center;gap:9px;padding:0 6px;color:#fff;font-size:.92rem;font-weight:500;white-space:nowrap}
+.ticker-item .src{font-weight:700;font-size:.78rem;background:rgba(255,255,255,.2);padding:2px 9px;border-radius:5px;letter-spacing:.01em}
+.ticker-item .t-time{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;opacity:.82;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ticker-item:hover .ttl{text-decoration:underline}
+.ticker-sep{color:rgba(255,255,255,.55);padding:0 14px;font-size:.7rem}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker-track{animation:none}.ticker-viewport{overflow-x:auto}}
+@media (max-width:560px){.ticker{height:42px}.ticker-label span:not(.dot){display:none}.ticker-label{padding:0 12px}}
+
+/* ISSUE CARD AS LINK */
+.issue{display:flex;flex-direction:column;color:inherit}
+.issue-cta{margin-top:14px;display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--accent);font-size:.88rem}
+
+/* EXPLAINER PAGE */
+.ex-block{border-radius:var(--radius);padding:20px 22px;margin-bottom:14px;border:1px solid var(--line)}
+.ex-block .ex-h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1.02rem;margin-bottom:8px}
+.ex-block p{color:var(--ink-2);line-height:1.6;font-size:1.02rem}
+.ex-fact{background:var(--surface)} .ex-fact .ex-h{color:var(--accent)}
+.ex-dispute{background:var(--surface-2)} .ex-dispute .ex-h{color:var(--gold)}
+.ex-sides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.ex-sides{grid-template-columns:1fr}}
+.ex-side{border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;background:var(--surface)}
+.ex-side-h{font-weight:700;font-size:.98rem;margin-bottom:8px}
+.ex-side p{color:var(--ink-2);line-height:1.55;font-size:.95rem}
+.ex-for .ex-side-h,.ex-against .ex-side-h{color:var(--ink);display:flex;align-items:center;gap:8px}
+.ex-side-h::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--ink-3);flex:0 0 auto;transform:rotate(45deg)}
+.fact-value-note{display:flex;gap:12px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);border-radius:var(--radius);padding:16px 18px;margin-top:22px;font-size:.94rem;line-height:1.55;color:var(--ink)}
+.fact-value-note svg{width:20px;height:20px;flex:0 0 auto;color:var(--gold);margin-top:2px}
+
+/* QUIZ EXPLAINER + LEARNING */
+.q-explain{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:20px}
+.q-ex-row{display:flex;gap:9px;font-size:.92rem;line-height:1.5;color:var(--ink-2);margin-bottom:8px}
+.q-ex-row .lbl{flex:0 0 auto;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 8px;height:fit-content;font-size:.78rem;white-space:nowrap}
+.q-ex-row .lbl.dis{color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,transparent)}
+.q-ex-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.q-ex-toggle{font-weight:600;font-size:.86rem;color:var(--ink-2);transition:color var(--t)}
+.q-ex-toggle:hover{color:var(--accent)}
+.q-ex-more{font-size:.86rem;font-weight:600;color:var(--accent)}
+.q-ex-sides{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media (max-width:560px){.q-ex-sides{grid-template-columns:1fr}}
+.q-prompt{font-weight:600;color:var(--ink-3);font-size:.92rem;margin-bottom:12px}
+.q-learning{display:flex;align-items:center;gap:9px;width:100%;max-width:560px;margin-top:11px;padding:13px 18px;border-radius:var(--radius-sm);border:1.5px dashed var(--line-2);background:transparent;color:var(--ink-2);font-weight:500;font-size:.95rem;text-align:start;transition:var(--t)}
+.q-learning:hover{border-color:var(--gold);color:var(--ink)}
+.q-learning.sel{border-style:solid;border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--ink)}
+.q-learning svg{color:var(--gold);flex:0 0 auto}
+
+/* COVERAGE + BLIND SPOTS */
+.coverage{font-size:.92rem;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 15px;margin-bottom:22px}
+.blind{margin-top:30px;border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:var(--radius);padding:22px 24px;background:color-mix(in srgb,var(--gold) 7%,var(--surface))}
+.blind-h{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:800;font-size:1.25rem;color:var(--ink)}
+.blind-h svg{color:var(--gold)}
+.blind-sub{color:var(--ink-2);font-size:.95rem;margin:8px 0 16px;line-height:1.5;max-width:60ch}
+.blind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.blind-item{display:flex;flex-direction:column;gap:5px;padding:14px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-2);transition:var(--t)}
+.blind-item:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:var(--shadow)}
+.blind-item .bt{font-weight:600;font-size:1rem}
+.blind-item .bg{font-size:.82rem;color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.blind-clear{display:flex;gap:12px;margin-top:28px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent);border-radius:var(--radius);padding:18px 20px;font-size:.95rem;line-height:1.55}
+.blind-clear svg{color:var(--good);flex:0 0 auto;margin-top:1px}
+
+/* BUDGET SIMULATOR */
+.budget-status{border-radius:var(--radius);padding:16px 20px;margin-bottom:22px;border:1.5px solid var(--line-2);background:var(--surface);transition:var(--t)}
+.budget-status.ok{border-color:#2a8c58;background:color-mix(in srgb,#2a8c58 9%,var(--surface))}
+.budget-status.over{border-color:#b3261e;background:color-mix(in srgb,#b3261e 9%,var(--surface))}
+.budget-status.under{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--surface))}
+.bs-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.bs-total{font-size:1.02rem}.bs-total strong{font-family:var(--serif);font-size:1.3rem}
+.bs-msg{font-weight:600;font-size:.92rem}
+.budget-status.ok .bs-msg{color:#1d6e4d}.budget-status.over .bs-msg{color:#a93219}.budget-status.under .bs-msg{color:var(--gold)}
+[data-theme="dark"] .budget-status.ok .bs-msg{color:#6fce9c}[data-theme="dark"] .budget-status.over .bs-msg{color:#e98a7a}
+.bs-bar{height:10px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bs-bar i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:right;background:var(--accent);transition:transform var(--t)}
+.budget-status.over .bs-bar i{background:#b3261e}
+.budget-cats{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
+@media (max-width:640px){.budget-cats{grid-template-columns:1fr}}
+.bcat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.bcat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.bcat-name{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.95rem}
+.bcat-name .sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.bcat-val{display:flex;flex-direction:column;align-items:flex-end;line-height:1.05}
+.bcat-val .pct{font-family:var(--serif);font-weight:900;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.bcat-val .nis{font-size:.72rem;color:var(--ink-3);font-weight:500;font-variant-numeric:tabular-nums;margin-top:3px;white-space:nowrap}
+.bd-match{margin:6px 0 18px;padding:16px 18px;border:1px solid var(--line-2);border-radius:var(--radius);background:var(--surface-2)}
+.bd-match-h{font-weight:700;font-size:.8rem;letter-spacing:.05em;color:var(--ink-3);text-transform:uppercase;margin-bottom:12px}
+.bd-match-row{display:flex;align-items:center;gap:13px;padding:2px 0}
+.bd-match-row .badge{width:44px;height:44px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:900;font-size:1.15rem}
+.bd-match-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bd-match-info .nm{font-weight:700;font-size:1.15rem}
+.bd-match-info .nm .pct{font-family:var(--serif);color:var(--accent);font-size:1rem;font-weight:900}
+.bd-match-sub{font-size:.82rem;color:var(--ink-3)}
+.bd-match-mini{display:flex;align-items:center;gap:9px;font-size:.92rem;color:var(--ink-2);padding-top:9px;border-top:1px solid var(--line);margin-top:10px}
+.bd-match-mini .badge{width:26px;height:26px;border-radius:7px;flex:0 0 auto;display:grid;place-items:center;color:#fff;font-family:var(--serif);font-weight:800;font-size:.76rem}
+.bd-match-mini .pct{margin-inline-start:auto;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.bslider{width:100%;height:6px;cursor:pointer;margin:2px 0 10px}
+.bcat-note{font-size:.82rem;color:var(--ink-3);line-height:1.45;min-height:36px}
+.budget-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.budget-done{margin-top:24px;border:1px solid var(--line-2);border-radius:var(--radius);padding:24px;background:var(--surface);animation:fadeUp .4s var(--t-slow) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.bd-h{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:800;font-size:1.4rem;margin-bottom:12px}
+.bd-h svg{color:var(--good)}
+.bd-sub{color:var(--ink-2);font-size:.95rem;margin-bottom:10px}
+.bd-list{list-style:none;display:grid;gap:9px;margin-bottom:18px}
+.bd-list li{display:flex;align-items:center;gap:9px;font-size:.96rem}
+.bd-list .sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.bd-tradeoff{color:var(--ink-3);font-size:.86rem}
+.bd-teach{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:var(--radius-sm);padding:16px 18px;font-family:var(--serif);font-size:1.05rem;line-height:1.5;color:var(--ink)}
+.budget-note{display:flex;align-items:flex-start;gap:9px;margin-top:22px;font-size:.84rem;color:var(--ink-3);line-height:1.5}
+.budget-note svg{width:17px;height:17px;flex:0 0 auto;color:var(--gold);margin-top:2px}
+
+/* TRUST CENTER */
+.audit-summary{display:flex;align-items:center;gap:16px;padding:20px 22px;border-radius:var(--radius-lg);border:1.5px solid var(--line-2);background:var(--surface);margin-bottom:30px}
+.audit-summary.pass{border-color:#2a8c58;background:color-mix(in srgb,#2a8c58 8%,var(--surface))}
+.audit-summary.warn{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,var(--surface))}
+.audit-summary.fail{border-color:#b3261e;background:color-mix(in srgb,#b3261e 8%,var(--surface))}
+.as-icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:var(--surface-2)}
+.as-icon svg{width:25px;height:25px}
+.audit-summary.pass .as-icon{color:#2a8c58}.audit-summary.warn .as-icon{color:var(--gold)}.audit-summary.fail .as-icon{color:#b3261e}
+.as-title{font-family:var(--serif);font-weight:800;font-size:1.3rem;line-height:1.2}
+.as-counts{font-size:.88rem;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
+.trust-h{font-size:1.5rem;margin:34px 0 4px}
+.trust-sub{color:var(--ink-2);font-size:.95rem;margin-bottom:16px;max-width:66ch;line-height:1.5}
+.audit-list{display:grid;gap:10px}
+.audit-item{border:1px solid var(--line);border-radius:var(--radius);padding:15px 18px;background:var(--surface)}
+.audit-item.fail{border-color:color-mix(in srgb,#b3261e 40%,var(--line))}
+.ai-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.ai-label{font-weight:600;font-size:1rem}
+.ai-detail{font-size:.92rem;color:var(--ink-2);line-height:1.5}
+.ai-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.ai-flags .flag{font-size:.78rem;background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--ink-2);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);padding:3px 9px;border-radius:6px}
+.audit-badge{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.audit-badge svg{width:13px;height:13px}
+.audit-badge.good{background:color-mix(in srgb,#2a8c58 16%,transparent);color:#1d6e4d}
+.audit-badge.warn{background:color-mix(in srgb,var(--gold) 18%,transparent);color:#7a5d18}
+.audit-badge.fail{background:color-mix(in srgb,#b3261e 16%,transparent);color:#a93219}
+[data-theme="dark"] .audit-badge.good{color:#6fce9c}[data-theme="dark"] .audit-badge.warn{color:var(--gold)}[data-theme="dark"] .audit-badge.fail{color:#e98a7a}
+.vstatus{font-size:.82rem;font-weight:600;color:var(--accent);white-space:nowrap}
+.charter{list-style:none;display:grid;gap:11px;margin-top:4px}
+.charter li{display:flex;gap:10px;align-items:flex-start;font-size:.98rem;line-height:1.5;color:var(--ink)}
+.charter li svg{width:18px;height:18px;flex:0 0 auto;color:var(--accent);margin-top:3px}
+.trust-limits{display:flex;gap:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-top:24px;font-size:.92rem;line-height:1.55;color:var(--ink-2)}
+.trust-limits svg{width:20px;height:20px;flex:0 0 auto;color:var(--gold);margin-top:2px}
+
+/* DATABASE */
+.db-section{margin-bottom:38px}
+.db-section h2{font-size:1.6rem;margin-bottom:6px}
+.db-section .sub{color:var(--ink-2);font-size:.96rem;margin-bottom:16px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:520px}
+th,td{text-align:start;padding:12px 16px;border-bottom:1px solid var(--line)}
+th{font-weight:700;color:var(--ink);background:var(--surface-2);position:sticky;top:0;font-size:.84rem;letter-spacing:.02em}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:7px;vertical-align:middle}
+.dl-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.dl{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line-2);font-weight:600;font-size:.9rem;font-family:ui-monospace,Menlo,Consolas,monospace;transition:var(--t)}
+.dl:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+.dl svg{width:16px;height:16px}
+.src-list{list-style:none;display:grid;gap:10px}
+.src-list li{display:flex;gap:10px;align-items:baseline;font-size:.95rem}
+.src-list a{color:var(--accent);font-weight:600}
+.src-list a:hover{text-decoration:underline}
+
+/* FOOTER */
+.footer{border-top:3px double var(--line-2);padding:clamp(36px,5vw,56px) 0 46px;margin-top:40px}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:32px}
+@media (max-width:720px){.footer-grid{grid-template-columns:1fr;gap:24px}}
+.footer h4{font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.footer .brand{margin-bottom:14px}
+.footer p,.footer li{color:var(--ink-2);font-size:.92rem;line-height:1.7}
+.footer ul{list-style:none}
+.footer a:hover{color:var(--accent)}
+.disclaimer{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;margin-top:28px;font-size:.86rem;color:var(--ink-2);line-height:1.6;display:flex;gap:13px}
+.disclaimer svg{width:22px;height:22px;flex:0 0 auto;color:var(--gold);margin-top:2px}
+.copy{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);font-size:.82rem;color:var(--ink-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+.loading-screen{position:fixed;inset:0;display:grid;place-items:center;background:var(--paper);z-index:500}
+.loading-screen .spin{width:34px;height:34px;border-width:3px}
+.empty{padding:40px;text-align:center;color:var(--ink-3)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a href="#/" class="brand" aria-label="מצפן הבוחר · לדף הבית">
+      <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M15.6 8.4 13.4 13.4 8.4 15.6 10.6 10.6Z" fill="currentColor" stroke="none"/></svg>
+      מצפן הבוחר
+    </a>
+    <nav class="nav" id="nav" aria-label="ניווט ראשי">
+      <a href="#/issues">הנושאים</a>
+      <a href="#/parties">המפלגות</a>
+      <a href="#/quiz">השאלון</a>
+      <a href="#/budget">התקציב</a>
+      <a href="#/news">חדשות וסקרים</a>
+      <a href="#/database">מאגר הנתונים</a>
+      <a href="#/trust">מרכז האמון</a>
+    </nav>
+    <button class="iconbtn" id="theme-btn" aria-label="החלפת מצב תצוגה (בהיר/כהה)" title="בהיר / כהה"></button>
+    <button class="iconbtn nav-toggle" id="nav-toggle" aria-label="פתיחת תפריט" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="view" tabindex="-1"></main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="brand" style="font-size:1.3rem">
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;color:var(--accent)" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M15.6 8.4 13.4 13.4 8.4 15.6 10.6 10.6Z" fill="currentColor" stroke="none"/></svg>
+          מצפן הבוחר
+        </div>
+        <p>כלי עצמאי שנועד לעזור למצביע הממוצע להתמצא: להבין את הנושאים, את המפלגות, ואת עצמו. אנחנו לא אומרים לך במי לבחור. אנחנו עוזרים לך לחשוב.</p>
+      </div>
+      <div>
+        <h4>ניווט</h4>
+        <ul>
+          <li><a href="#/issues">הנושאים</a></li>
+          <li><a href="#/parties">המפלגות</a></li>
+          <li><a href="#/quiz">השאלון</a></li>
+          <li><a href="#/news">חדשות וסקרים</a></li>
+          <li><a href="#/database">מאגר הנתונים</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>שקיפות</h4>
+        <ul>
+          <li><a href="#/database">כל הנתונים פתוחים לעיון</a></li>
+          <li id="foot-updated"></li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <div id="foot-disclaimer"></div>
+    </div>
+    <div class="copy">
+      <span>© 2026 מצפן הבוחר · כלי הסברה נייטרלי</span>
+      <span><a href="#/database">מאגר הנתונים והמקורות ←</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="loading-screen" id="loading"><div class="spin"></div></div>
+
+<script>
+/* ===================== STATE & DATA ===================== */
+const DATA = {};
+let quiz = null;
+
+const ICONS = {
+  shield:'<path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z"/>',
+  scale:'<path d="M12 4v16M7 8h10M5 8l-2.5 6h5L5 8ZM19 8l-2.5 6h5L19 8ZM8 20h8"/>',
+  flag:'<path d="M5 21V4M5 4c3-1.5 6 1.5 9 0s5 0 5 0v9s-2 1.5-5 0-6 1.5-9 0"/>',
+  hands:'<path d="M8 13V7a2 2 0 1 1 4 0M12 13V5a2 2 0 1 1 4 0v8M16 9a2 2 0 1 1 4 0v5a6 6 0 0 1-6 6h-2a6 6 0 0 1-5.6-3.8L4 14"/>',
+  coins:'<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3M15 12c0 1.7 2.7 3 6 3"/><ellipse cx="15" cy="14" rx="6" ry="3"/><path d="M9 12v5c0 1.7 2.7 3 6 3"/>',
+  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2ZM9 4v14M15 6v14"/>',
+  vote:'<path d="M9 11l2.5 2.5L16 9M5 21h14a2 2 0 0 0 2-2V8l-5-5H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z"/>',
+  compass:'<circle cx="12" cy="12" r="9.2"/><path d="M15.6 8.4 13.4 13.4 8.4 15.6 10.6 10.6Z" fill="currentColor" stroke="none"/>',
+  users:'<circle cx="9" cy="7" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14.5 17.5a4.4 4.4 0 0 1 6 1.5"/>',
+  news:'<path d="M4 5h13v14H6a2 2 0 0 1-2-2V5ZM17 8h3v9a2 2 0 0 1-2 2M7 8h7M7 12h7M7 16h5"/>',
+  db:'<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+  trust:'<path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z"/><path d="M9.2 12l2 2 3.6-3.8"/>'
+};
+const svgIcon = (k,cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]||''}</svg>`;
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const heDate = d => new Date(d).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+const fmtFull = d => d.toLocaleDateString('he-IL',{day:'numeric',month:'long'})+', '+d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+const fmtShort = d => d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' · '+d.toLocaleDateString('he-IL',{day:'numeric',month:'numeric'});
+const clockMini = () => '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v4.8l3 1.8"/></svg>';
+
+/* ===================== THEME ===================== */
+const sunIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const moonIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+const themeBtn=document.getElementById('theme-btn');
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);themeBtn.innerHTML=t==='dark'?sunIcon:moonIcon;try{localStorage.setItem('mb-theme',t)}catch(e){}}
+(function(){let t='light';try{t=localStorage.getItem('mb-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch(e){}applyTheme(t)})();
+themeBtn.addEventListener('click',()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'));
+
+const navToggle=document.getElementById('nav-toggle'),nav=document.getElementById('nav');
+navToggle.addEventListener('click',()=>{const o=nav.classList.toggle('open');navToggle.setAttribute('aria-expanded',o)});
+nav.addEventListener('click',e=>{if(e.target.closest('a')){nav.classList.remove('open');navToggle.setAttribute('aria-expanded','false')}});
+
+/* ===================== SCORING HELPERS ===================== */
+const SP={'2':'sp2','1':'sp1','0':'sp0','-1':'spn1','-2':'spn2'};
+function stanceLabel(v){return DATA.statements.scale.label[String(v)]}
+function axisScore(posObj, weights){
+  let s=0,max=0;
+  for(const k in weights){ const v=posObj[k]; if(v==null)continue; s+=v*weights[k]; max+=2*Math.abs(weights[k]); }
+  return max>0? s/max : 0;
+}
+function answersToObj(answers){const o={};DATA.statements.statements.forEach((st,i)=>{if(answers[i].val!=null)o[st.id]=answers[i].val});return o}
+
+/* ===================== ROUTER ===================== */
+const view=document.getElementById('view');
+const routes=[
+  {re:/^#\/$|^$|^#$/,name:'home',fn:viewHome},
+  {re:/^#\/issues$/,name:'issues',fn:viewIssues},
+  {re:/^#\/issue\/(.+)$/,name:'issue',fn:viewIssue},
+  {re:/^#\/parties$/,name:'parties',fn:viewParties},
+  {re:/^#\/party\/(.+)$/,name:'party',fn:viewParty},
+  {re:/^#\/quiz$/,name:'quiz',fn:viewQuiz},
+  {re:/^#\/budget$/,name:'budget',fn:viewBudget},
+  {re:/^#\/news$/,name:'news',fn:viewNews},
+  {re:/^#\/database$/,name:'database',fn:viewDatabase},
+  {re:/^#\/trust$/,name:'trust',fn:viewTrust}
+];
+function router(){
+  const h=location.hash||'#/';
+  let matched=routes[0],m=null;
+  for(const r of routes){const mm=h.match(r.re);if(mm){matched=r;m=mm;break}}
+  // active nav
+  nav.querySelectorAll('a').forEach(a=>{
+    const href=a.getAttribute('href');
+    a.classList.toggle('active', href===h || (matched.name==='party'&&href==='#/parties') || (matched.name==='issue'&&href==='#/issues'));
+  });
+  const res=matched.fn(m);
+  view.innerHTML='<div class="view">'+res.html+'</div>';
+  window.scrollTo(0,0);
+  view.focus({preventScroll:true});
+  if(res.after) res.after();
+}
+window.addEventListener('hashchange',router);
+
+/* ===================== VIEWS ===================== */
+function viewHome(){
+  const cards=[
+    {r:'#/issues',ic:'flag',h:'הנושאים · קודם להבין',p:'כל נושא בהסבר ניטרלי: מה זה בעובדה, למה זה שנוי במחלוקת, ומה הטיעון הכי חזק של כל צד.'},
+    {r:'#/parties',ic:'users',h:'המפלגות',p:'כל מפלגה: מנהיג, גוש, מנדטים, הרשימה והמתמודדים, והעמדה בכל נושא.'},
+    {r:'#/quiz',ic:'compass',h:'השאלון',p:`${DATA.statements.statements.length} שאלות, ובסוף אחוז התאמה לכל מפלגה, מפה פוליטית, ודוח נקודות עיוורות.`},
+    {r:'#/budget',ic:'coins',h:'סימולטור התקציב',p:'אתה שר האוצר לשתי דקות. נסה לאזן את התקציב, ותגלה שאין כסף חינם.'},
+    {r:'#/news',ic:'news',h:'חדשות וסקרים',p:'כותרות פוליטיות חיות בזמן אמת, והסקרים האחרונים.'},
+    {r:'#/trust',ic:'trust',h:'מרכז האמון',p:'איך שומרים על אמון: בדיקת מקורות, סריקת ניטרליות, ומבדק תקינות אוטומטי ועצמאי על כל הנתונים.'},
+    {r:'#/database',ic:'db',h:'מאגר הנתונים',p:'כל הנתונים, הסקרים והמקורות, פתוחים לעיון ולהורדה.'}
+  ];
+  const html=`
+  <div class="ticker" id="ticker" aria-label="פס מבזקי חדשות"></div>
+  <section class="hero"><div class="wrap">
+    <div class="dateline">
+      <span class="live"><span class="dot"></span> ${esc(DATA.meta.election)}</span>
+      <span>${heDate(DATA.meta.lastUpdated)}</span>
+      <span>· כלי עצמאי ולא־מפלגתי</span>
+    </div>
+    <h1>סדר את הראש <em>לפני שאתה מצביע.</em></h1>
+    <p class="lede">המפה הפוליטית מבלבלת. כאן תבין מה באמת על הפרק, מי כל המפלגות ומה הן רוצות, ותגלה איפה <strong>אתה</strong> עומד. בלי סיסמאות, בלי לחץ.</p>
+    <div class="hero-actions">
+      <a href="#/quiz" class="btn btn-primary">${svgIcon('compass')} מצא את העמדה שלך</a>
+      <a href="#/parties" class="btn btn-ghost">${svgIcon('users')} הכר את המפלגות</a>
+    </div>
+    <div class="home-grid">
+      ${cards.map(c=>`<a class="home-card" href="${c.r}">
+        <div class="ic">${svgIcon(c.ic)}</div>
+        <h3>${c.h}</h3><p>${c.p}</p>
+        <span class="go">כניסה ${chev()}</span>
+      </a>`).join('')}
+    </div>
+  </div></section>`;
+  return {html, after(){ tickerLoading(); getNews().then(mountTicker); }};
+}
+
+function viewIssues(){
+  const html=`<div class="page"><div class="wrap">
+    <div class="page-head"><span class="kicker">קודם להבין</span><h1>מה באמת על הפרק</h1>
+    <p>לפני שמחליטים, מבינים. כל נושא בהסבר ניטרלי: מה זה בעובדה, למה זה שנוי במחלוקת, ומה הטיעון הכי חזק של כל צד. לחיצה פותחת את ההסבר המלא.</p></div>
+    <div class="grid-cards">
+      ${DATA.issues.map(it=>`<a class="issue" href="#/issue/${it.explainer}">
+        <div class="ic">${svgIcon(it.ic)}</div>
+        <h3>${esc(it.title)}</h3><p>${esc(it.text)}</p>
+        <div class="camps">${it.camps.map(c=>`<span class="tag">${esc(c)}</span>`).join('')}</div>
+        <span class="issue-cta">קודם להבין ${chev()}</span>
+      </a>`).join('')}
+    </div></div></div>`;
+  return {html};
+}
+
+function viewIssue(m){
+  const ex=DATA.explainers[m[1]];
+  if(!ex) return {html:`<div class="page"><div class="wrap"><a href="#/issues" class="breadcrumb">${chevBack()} כל הנושאים</a><div class="empty">הנושא לא נמצא.</div></div></div>`};
+  const src=ex.source?`<a class="src-link" href="${esc(ex.source.url)}" target="_blank" rel="noopener noreferrer">${esc(ex.source.name)} ↗</a>`:'';
+  const simCta=ex.simulator?`<a href="#/budget" class="btn btn-ghost btn-sm">${svgIcon('coins')} נסה לאזן את התקציב בעצמך</a>`:'';
+  const html=`<div class="page"><div class="wrap" style="max-width:840px">
+    <a href="#/issues" class="breadcrumb">${chevBack()} כל הנושאים</a>
+    <span class="kicker">קודם להבין</span>
+    <h1 class="page-head" style="margin:8px 0 24px;font-size:clamp(2rem,5vw,3rem)">${esc(ex.title)}</h1>
+
+    <div class="ex-block ex-fact">
+      <div class="ex-h">${factIcon()} מה זה, בעובדה</div>
+      <p>${esc(ex.fact)}</p>
+    </div>
+    <div class="ex-block ex-dispute">
+      <div class="ex-h">${disputeIcon()} למה זה שנוי במחלוקת</div>
+      <p>${esc(ex.dispute)}</p>
+    </div>
+
+    <h3 style="font-family:var(--serif);font-size:1.4rem;margin:30px 0 4px">הטיעון הכי חזק של כל צד</h3>
+    <p style="color:var(--ink-3);font-size:.9rem;margin-bottom:16px">לא כדי לשכנע, אלא כדי שתבין את שני הצדדים לפני שתחליט.</p>
+    <div class="ex-sides">
+      <div class="ex-side ex-for"><div class="ex-side-h">${esc(ex.for.label)}</div><p>${esc(ex.for.text)}</p></div>
+      <div class="ex-side ex-against"><div class="ex-side-h">${esc(ex.against.label)}</div><p>${esc(ex.against.text)}</p></div>
+    </div>
+
+    <div class="fact-value-note">${warnIcon()}<div><strong>זכור את ההבחנה:</strong> ה"עובדה" מוסכמת על רוב הצדדים. המחלוקת היא על ה<strong>ערכים</strong>, ושם אין תשובה "נכונה", רק בחירה שלך.</div></div>
+
+    <div class="hero-actions" style="margin-top:26px">
+      <a href="#/quiz" class="btn btn-primary btn-sm">${svgIcon('compass')} עכשיו בדוק את עמדתך בשאלון</a>
+      ${simCta}
+    </div>
+    ${src?`<div style="margin-top:18px">${src}</div>`:''}
+  </div></div>`;
+  return {html};
+}
+
+const BLOCS=[{id:'all',label:'הכל'},{id:'ימין',label:'ימין'},{id:'חרדי',label:'חרדי'},{id:'מרכז',label:'מרכז'},{id:'שמאל',label:'שמאל'},{id:'ערבי',label:'ערבי'}];
+let partyFilter='all';
+function viewParties(){
+  const html=`<div class="page"><div class="wrap">
+    <div class="page-head"><span class="kicker">מי מתמודד</span><h1>המפלגות והרשימות</h1>
+    <p>כל המפלגות והרשימות המרכזיות: מנהיג, גוש, ומספר המנדטים בכנסת ה‑25. לחיצה על כרטיס פותחת עמוד מלא עם הרשימה, המתמודדים והעמדות.</p></div>
+    <div class="filters" id="filters" role="group" aria-label="סינון לפי גוש">
+      ${BLOCS.map(b=>`<button class="chip ${b.id===partyFilter?'active':''}" data-bloc="${b.id}">${b.label}</button>`).join('')}
+    </div>
+    <div class="grid-cards" id="parties-grid"></div>
+  </div></div>`;
+  return {html, after(){
+    const grid=document.getElementById('parties-grid');
+    function render(){
+      const list=partyFilter==='all'?DATA.parties:DATA.parties.filter(p=>p.bloc===partyFilter);
+      const sorted=[...list].sort((a,b)=>b.seats-a.seats||(a.isNew?1:0)-(b.isNew?1:0));
+      grid.innerHTML=sorted.map(p=>`
+        <a class="party ${p.isNew?'new':''}" href="#/party/${p.id}" aria-label="פרטים על ${esc(p.name)}">
+          <div class="party-top">
+            <div class="party-badge" style="background:${p.color}">${esc(p.abbr)}</div>
+            <div style="flex:1"><h3>${esc(p.name)}</h3><div class="leader">${esc(p.leader)}</div><span class="party-bloc">${esc(p.bloc)}</span></div>
+          </div>
+          <div class="party-body">
+            <p class="party-essence">${esc(p.essence)}</p>
+            <div class="party-foot">
+              <div class="seats">${p.seats>0?`<span class="num">${p.seats}</span><span class="lab">מנדטים · כנסת ה‑25</span>`:`<span class="lab">רשימה חדשה לבחירות 2026</span>`}</div>
+              <span class="more">לעמוד המלא ${chev()}</span>
+            </div>
+          </div>
+        </a>`).join('');
+    }
+    render();
+    document.getElementById('filters').addEventListener('click',e=>{
+      const c=e.target.closest('.chip'); if(!c)return;
+      partyFilter=c.dataset.bloc;
+      document.querySelectorAll('#filters .chip').forEach(x=>x.classList.toggle('active',x.dataset.bloc===partyFilter));
+      render();
+    });
+  }};
+}
+
+function viewParty(m){
+  const p=DATA.parties.find(x=>x.id===m[1]);
+  if(!p) return {html:`<div class="page"><div class="wrap"><a href="#/parties" class="breadcrumb">${chevBack()} כל המפלגות</a><div class="empty">המפלגה לא נמצאה.</div></div></div>`};
+  const stances=DATA.statements.statements.map(st=>{
+    const v=p.positions[st.id];
+    return `<div class="stance-row"><span class="q">${esc(st.text)}</span><span class="stance-pill ${SP[v]}">${esc(stanceLabel(v))}</span></div>`;
+  }).join('');
+  const cands=(p.candidates||[]).map(c=>`
+    <div class="cand"><div class="av" style="background:${p.color}">${esc(c.name.trim()[0])}</div>
+      <div><div class="nm">${esc(c.name)}</div><div class="rl">${esc(c.role)}</div></div></div>`).join('');
+  const html=`<div class="page"><div class="wrap">
+    <a href="#/parties" class="breadcrumb">${chevBack()} כל המפלגות</a>
+    <div class="pd-hero" style="background:${p.color}">
+      <div class="pd-badge">${esc(p.abbr)}</div>
+      <div>
+        <h1>${esc(p.name)}</h1>
+        <div class="leader">בראשות ${esc(p.leader)}</div>
+        <div class="meta">
+          <span class="pd-pill">גוש ${esc(p.bloc)}</span>
+          ${p.seats>0?`<span class="pd-pill">${p.seats} מנדטים · כנסת ה‑25</span>`:`<span class="pd-pill">רשימה חדשה · 2026</span>`}
+        </div>
+      </div>
+    </div>
+    <div class="status-note">
+      ${svgIcon('flag')}
+      <div><strong>מצב לקראת 2026:</strong> ${esc(p.status2026)}</div>
+    </div>
+    <div class="pd-cols">
+      <div class="panel">
+        <h3>הרשימה והמתמודדים</h3>
+        <div class="sub">דמויות מרכזיות ומה הן מייצגות. הרשימות ל‑2026 טרם נסגרו רשמית.</div>
+        ${cands||'<div class="empty">הרשימה טרם פורסמה.</div>'}
+      </div>
+      <div class="panel">
+        <h3>עמדות לפי נושא</h3>
+        <div class="sub">${esc(p.essence)}</div>
+        ${stances}
+      </div>
+    </div>
+    <div class="hero-actions" style="margin-top:28px">
+      <a href="#/quiz" class="btn btn-primary">${svgIcon('compass')} בדוק כמה אתה מתאים</a>
+      <a href="#/parties" class="btn btn-ghost">${chevBack()} למפלגות אחרות</a>
+    </div>
+  </div></div>`;
+  return {html};
+}
+
+/* ----- QUIZ ----- */
+function initQuiz(){
+  if(quiz) return;
+  quiz={answers:DATA.statements.statements.map(()=>({val:null,important:false,learning:false})),qi:0,done:false};
+}
+function viewQuiz(){
+  initQuiz();
+  const html=`<div class="page"><div class="wrap">
+    <div class="page-head"><span class="kicker">בדקו את עצמכם</span><h1>איפה אתה עומד?</h1>
+    <p>${DATA.statements.statements.length} אמירות על נושאי הליבה. סמן עד כמה אתה מסכים, ובסוף נראה לך עם אילו מפלגות העמדות שלך מתיישבות, ואיפה אתה ממוקם על המפה. אנונימי לחלוטין, שום דבר לא נשמר או נשלח.</p></div>
+    <div class="quiz">
+      <div class="quiz-bar"><i id="quiz-progress"></i></div>
+      <div class="quiz-inner" id="quiz-inner"></div>
+    </div>
+  </div></div>`;
+  return {html, after:renderQuizBody};
+}
+function renderQuizBody(){
+  if(quiz.done) return renderResults();
+  const S=DATA.statements.statements, a=quiz.answers[quiz.qi], st=S[quiz.qi];
+  const ex=DATA.explainers[st.explainer]||{};
+  const OPTS=[2,1,0,-1,-2];
+  document.getElementById('quiz-inner').innerHTML=`
+    <div class="q-step">שאלה ${quiz.qi+1} מתוך ${S.length}</div>
+    <div class="q-topic">${svgIcon('vote')} ${esc(st.topic)}</div>
+    <h3 class="q-text">${esc(st.text)}</h3>
+    <div class="q-explain">
+      <div class="q-ex-row"><span class="lbl">מה זה?</span><span>${esc(ex.fact||'')}</span></div>
+      <div class="q-ex-row"><span class="lbl dis">במחלוקת</span><span>${esc(ex.dispute||'')}</span></div>
+      <div class="q-ex-actions">
+        <button class="q-ex-toggle" id="ex-toggle" aria-expanded="false">הצג את שני הצדדים החזקים ▾</button>
+        <a class="q-ex-more" href="#/issue/${st.explainer}">להסבר המלא ›</a>
+      </div>
+      <div class="q-ex-sides" id="ex-sides" hidden>
+        <div class="ex-side ex-for"><div class="ex-side-h">${esc(ex.for&&ex.for.label||'')}</div><p>${esc(ex.for&&ex.for.text||'')}</p></div>
+        <div class="ex-side ex-against"><div class="ex-side-h">${esc(ex.against&&ex.against.label||'')}</div><p>${esc(ex.against&&ex.against.text||'')}</p></div>
+      </div>
+    </div>
+    <div class="q-prompt">עכשיו, אחרי שהבנת: מה עמדתך?</div>
+    <div class="q-options" id="q-options">
+      ${OPTS.map(v=>`<button class="q-opt ${a.val===v?'sel':''}" data-v="${v}"><span class="rb"></span>${esc(stanceLabel(v))}</button>`).join('')}
+    </div>
+    <button class="q-learning ${a.learning?'sel':''}" id="q-learning">${bulbIcon()} עדיין לומד את הנושא, אל תספרו לי את זה בתוצאה</button>
+    <label class="q-imp"><span class="switch ${a.important?'on':''}" id="q-imp" role="switch" aria-checked="${a.important}" tabindex="0"><i></i></span> הנושא הזה <strong>חשוב לי במיוחד</strong> (משקל כפול)</label>
+    <div class="q-nav">
+      <button class="txtbtn" id="q-prev" ${quiz.qi===0?'disabled':''}>‹ הקודם</button>
+      <button class="txtbtn" id="q-skip">${quiz.qi===S.length-1?'סיים וקבל תוצאה ›':'דלג על השאלה ›'}</button>
+    </div>`;
+  setProgress(quiz.qi/S.length);
+  const next=()=>{ if(quiz.qi<S.length-1){quiz.qi++;renderQuizBody()} else {quiz.done=true;renderResults()} };
+  document.getElementById('q-options').addEventListener('click',e=>{
+    const b=e.target.closest('.q-opt'); if(!b)return;
+    quiz.answers[quiz.qi].val=parseInt(b.dataset.v,10); quiz.answers[quiz.qi].learning=false;
+    document.querySelectorAll('#q-options .q-opt').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+    setTimeout(next,230);
+  });
+  document.getElementById('q-learning').addEventListener('click',()=>{
+    quiz.answers[quiz.qi].learning=true; quiz.answers[quiz.qi].val=null;
+    document.getElementById('q-learning').classList.add('sel');
+    setTimeout(next,260);
+  });
+  const exT=document.getElementById('ex-toggle');
+  exT.addEventListener('click',()=>{const s=document.getElementById('ex-sides');const willOpen=s.hidden;s.hidden=!willOpen;exT.setAttribute('aria-expanded',willOpen);exT.textContent=willOpen?'הסתר את שני הצדדים ▴':'הצג את שני הצדדים החזקים ▾'});
+  const sw=document.getElementById('q-imp');
+  const toggleImp=()=>{quiz.answers[quiz.qi].important=!quiz.answers[quiz.qi].important;renderQuizBody()};
+  sw.addEventListener('click',toggleImp);
+  sw.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleImp()}});
+  document.getElementById('q-prev').addEventListener('click',()=>{if(quiz.qi>0){quiz.qi--;renderQuizBody()}});
+  document.getElementById('q-skip').addEventListener('click',next);
+}
+function setProgress(frac){const el=document.getElementById('quiz-progress');if(el)el.style.transform='scaleX('+frac+')'}
+function computeMatches(){
+  return DATA.parties.map(p=>{
+    let score=0,max=0;
+    quiz.answers.forEach((a,i)=>{ if(a.val==null)return; const w=a.important?2:1;
+      const pv=p.positions[DATA.statements.statements[i].id];
+      score+=w*(1-Math.abs(a.val-pv)/4); max+=w; });
+    return {p,pct:max>0?Math.round(score/max*100):0};
+  }).sort((x,y)=>y.pct-x.pct);
+}
+function renderResults(){
+  setProgress(1);
+  const S=DATA.statements.statements;
+  const matches=computeMatches();
+  const answered=quiz.answers.filter(a=>a.val!=null).length;
+  const learning=quiz.answers.filter(a=>a.learning).length;
+  const blind=S.map((st,i)=>({st,a:quiz.answers[i]})).filter(x=>x.a.val==null);
+  document.getElementById('quiz-inner').innerHTML=`
+    <span class="eyebrow">התוצאה שלך</span>
+    <h3 class="q-text" style="margin:8px 0 6px">הנה איפה אתה עומד</h3>
+    <p style="color:var(--ink-2);margin-bottom:10px;max-width:56ch">ככל שהאחוז גבוה יותר, כך עמדותיך קרובות יותר לעמדות המפלגה. זו אינה המלצה, רק מראה. החלטת ההצבעה כולה שלך.</p>
+    <p class="coverage">הציון מבוסס על <strong>${answered}</strong> מתוך ${S.length} נושאים שבהם הבעת עמדה${learning?`, ו‑<strong>${learning}</strong> נושאים שסימנת שאתה עדיין לומד (לא נספרו)`:''}.</p>
+    <div class="results-grid">
+      <div id="match-list"></div>
+      <div class="compass-card"><h4>המפה הפוליטית</h4><p>הנקודה השחורה זה אתה. כל אות היא מפלגה.</p>
+        <svg id="compass" viewBox="0 0 320 320" role="img" aria-label="מפה דו־ממדית: ציר אופקי גוש פוליטי, ציר אנכי דת ומדינה"></svg>
+      </div>
+    </div>
+    ${blindHTML(blind)}
+    <div class="q-nav" style="margin-top:30px">
+      <button class="btn btn-ghost btn-sm" id="q-restart">${refreshIcon()} התחל מחדש</button>
+      <a href="#/parties" class="btn btn-primary btn-sm">קרא לעומק על המפלגות ${chev()}</a>
+    </div>`;
+  document.getElementById('match-list').innerHTML=matches.map((mt,i)=>`
+    <div class="match-row"><div class="badge" style="background:${mt.p.color}">${esc(mt.p.abbr)}</div>
+      <div class="info"><div class="nm"><span>${esc(mt.p.name)}${i===0?' · ההתאמה הגבוהה ביותר':''}</span><span class="pct">${mt.pct}%</span></div>
+        <div class="track"><i style="background:${mt.p.color}" data-w="${mt.pct}"></i></div></div></div>`).join('');
+  drawCompass();
+  requestAnimationFrame(()=>document.querySelectorAll('#match-list .track i').forEach(i=>i.style.transform='scaleX('+(i.dataset.w/100)+')'));
+  document.getElementById('q-restart').addEventListener('click',()=>{quiz=null;initQuiz();renderQuizBody()});
+}
+function drawCompass(){
+  const svg=document.getElementById('compass'); const S=320,pad=34,mid=S/2;
+  const ax=DATA.statements.axes;
+  const toX=v=>mid+v*(mid-pad);
+  let html=`<rect x="${pad}" y="${pad}" width="${S-2*pad}" height="${S-2*pad}" rx="10" fill="var(--paper)" stroke="var(--line)"/>`;
+  html+=`<line x1="${mid}" y1="${pad}" x2="${mid}" y2="${S-pad}" stroke="var(--line-2)" stroke-dasharray="3 4"/>`;
+  html+=`<line x1="${pad}" y1="${mid}" x2="${S-pad}" y2="${mid}" stroke="var(--line-2)" stroke-dasharray="3 4"/>`;
+  const lab=(x,y,t,an)=>`<text x="${x}" y="${y}" fill="var(--ink-3)" font-size="11" font-family="Heebo" font-weight="600" text-anchor="${an}">${t}</text>`;
+  html+=lab(S-pad,mid-7,ax.bloc.posLabel,'end')+lab(pad,mid-7,ax.bloc.negLabel,'start');
+  html+=lab(mid,pad-12,ax.relig.negLabel,'middle')+lab(mid,S-pad+20,ax.relig.posLabel,'middle');
+  DATA.parties.forEach(p=>{
+    const bx=axisScore(p.positions,ax.bloc.weights), ry=axisScore(p.positions,ax.relig.weights);
+    const x=toX(bx), y=mid+ry*(mid-pad);
+    html+=`<g><circle cx="${x}" cy="${y}" r="11" fill="${p.color}" opacity=".9"/><text x="${x}" y="${y+3.5}" fill="#fff" font-size="9.5" font-family="Heebo" font-weight="700" text-anchor="middle">${esc(p.abbr)}</text></g>`;
+  });
+  const uo=answersToObj(quiz.answers);
+  const ubx=axisScore(uo,ax.bloc.weights), ury=axisScore(uo,ax.relig.weights);
+  const ux=toX(ubx), uy=mid+ury*(mid-pad);
+  html+=`<g><circle cx="${ux}" cy="${uy}" r="9" fill="var(--ink)" stroke="var(--paper)" stroke-width="3"/><circle cx="${ux}" cy="${uy}" r="14" fill="none" stroke="var(--ink)" stroke-width="1.5" opacity=".5"><animate attributeName="r" values="11;18;11" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".55;0;.55" dur="2.4s" repeatCount="indefinite"/></circle></g>`;
+  svg.innerHTML=html;
+}
+
+/* ----- NEWS + POLLS ----- */
+function viewNews(){
+  const polls=DATA.polls.polls;
+  const maxSeats=Math.max(1,...polls.flatMap(p=>p.figures.map(f=>f.seats)));
+  const partyColor=name=>{const p=DATA.parties.find(x=>name.includes(x.name)||x.name.includes(name.replace(/\s*\(.+\)/,'')));return p?p.color:'var(--accent)'};
+  const pollCards=polls.map(pl=>`
+    <div class="poll">
+      <div class="poll-hd"><span class="pollster">${esc(pl.pollster)}</span><span class="date">${esc(pl.date)}</span></div>
+      <div class="summary">${esc(pl.summary)}</div>
+      ${pl.figures.length?pl.figures.map(f=>`
+        <div class="pbar"><span class="nm">${esc(f.party)}</span>
+          <span class="track"><i style="width:${Math.round(f.seats/maxSeats*100)}%;background:${partyColor(f.party)}"></i></span>
+          <span class="val">${f.seats}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-3)">פרטי הסקר המלא בקישור.</div>'}
+      <a class="src-link" href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener noreferrer">לסקר המלא ${chev()}</a>
+    </div>`).join('');
+  const html=`<div class="ticker" id="ticker" aria-label="פס מבזקי חדשות"></div><div class="page"><div class="wrap">
+    <div class="page-head" style="margin-bottom:24px"><span class="kicker">בזמן אמת</span><h1>חדשות וסקרים</h1>
+    <p>כותרות פוליטיות עדכניות, נמשכות בזמן אמת ממקורות החדשות בעברית, לצד הסקרים האחרונים שפורסמו. מתרענן אוטומטית.</p></div>
+
+    <div class="news-head"><div class="news-status" id="news-status"><span class="spin"></span> טוען כותרות…</div>
+      <button class="btn btn-ghost btn-sm" id="news-refresh">${refreshIcon()} רענן</button></div>
+    <div class="news-grid" id="news-grid"></div>
+
+    <h2 style="font-size:1.7rem;margin:42px 0 6px">הסקרים האחרונים</h2>
+    <p style="color:var(--ink-2);max-width:64ch;margin-bottom:8px">${esc(DATA.polls.note)}</p>
+    <div class="status-note" style="margin-bottom:20px">${svgIcon('flag')}<div>${esc(DATA.polls.livePollsFeasibility)}</div></div>
+    <div class="grid-cards">${pollCards}</div>
+
+    <div class="poll" id="wiki-live" style="margin-top:22px">
+      <div class="poll-hd"><span class="pollster">מקור חי: ויקיפדיה</span><span class="date" id="wiki-updated">בודק…</span></div>
+      <div class="summary">עמוד "הבחירות לכנסת ה‑26" בוויקיפדיה מתעדכן ע"י עורכים בזמן אמת (רשימות מתהוות, התארגנויות).</div>
+      <a class="src-link" href="https://he.wikipedia.org/wiki/הבחירות_לכנסת_העשרים_ושש" target="_blank" rel="noopener noreferrer">לעמוד החי בוויקיפדיה ${chev()}</a>
+    </div>
+  </div></div>`;
+  return {html, after(){ loadNews(); document.getElementById('news-refresh').addEventListener('click',()=>loadNews(true)); fetchWikiTimestamp(); }};
+}
+const NEWS_QUERY='בחירות OR כנסת OR ממשלה OR קואליציה OR נתניהו OR סקר OR מנדטים';
+const RSS='https://news.google.com/rss/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he&gl=IL&ceid=IL:he';
+const PROXIES=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)];
+const SEED=[
+  {t:'הכנסת מקדמת הצעת חוק לפיזורה; ייתכן שהבחירות יוקדמו לספטמבר',src:'מבזק'},
+  {t:'סקר: יש"ר בראשות אייזנקוט מתחרה בליכוד על המקום הראשון',src:'סקרים'},
+  {t:'משבר הגיוס: יהדות התורה הודיעה על תמיכה בפיזור הכנסת',src:'מבזק'},
+  {t:'ביחד בראשות בנט ולפיד מול ישר של אייזנקוט על מרכז המפה',src:'פוליטי'},
+  {t:'הדמוקרטים בראשות גולן מציבים את ההגנה על הדמוקרטיה במרכז הקמפיין',src:'פוליטי'},
+  {t:'יוקר המחיה והיום שאחרי המלחמה: הנושאים שיכריעו את הבחירות',src:'כלכלה'}
+];
+function relTime(d){if(!d)return'';const s=(Date.now()-d.getTime())/1000;if(s<3600)return'לפני '+Math.max(1,Math.round(s/60))+' דק׳';if(s<86400)return'לפני '+Math.round(s/3600)+' שע׳';return'לפני '+Math.round(s/86400)+' ימים'}
+function newsCard(it){
+  const when = it.dt ? `<span class="when">${clockMini()} ${esc(fmtFull(it.dt))}</span><span class="rel">${esc(relTime(it.dt))}</span>` : '';
+  const meta=`<span class="src">${esc(it.src||'חדשות')}</span>${when}`;
+  const inner=`<div class="meta">${meta}</div><h3>${esc(it.t)}</h3><span class="go">קרא בכתבה ${chev()}</span>`;
+  return it.link?`<a class="news-card" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<article class="news-card">${inner}</article>`;
+}
+let newsCache=null;
+async function getNews(force){
+  if(newsCache&&!force) return newsCache;
+  for(const make of PROXIES){
+    try{
+      const res=await fetch(make(RSS),{cache:'no-store',signal:AbortSignal.timeout(7000)}); if(!res.ok)continue;
+      const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+      const items=[...xml.querySelectorAll('item')].slice(0,14).map(it=>{
+        let title=(it.querySelector('title')?.textContent||'').trim();
+        let src=(it.querySelector('source')?.textContent||'').trim();
+        const mm=title.match(/^(.*) - ([^-]+)$/); if(mm){title=mm[1].trim(); if(!src)src=mm[2].trim();}
+        const pd=it.querySelector('pubDate')?.textContent;
+        return {t:title,src:src||'חדשות',link:it.querySelector('link')?.textContent||'',dt:pd?new Date(pd):null};
+      }).filter(x=>x.t);
+      if(items.length){ newsCache={items,live:true,at:Date.now()}; return newsCache; }
+    }catch(e){}
+  }
+  newsCache={items:SEED.map(s=>({t:s.t,src:s.src,link:'',dt:null})),live:false,at:Date.now()};
+  return newsCache;
+}
+function renderNews(d){
+  const grid=document.getElementById('news-grid'), status=document.getElementById('news-status'); if(!grid)return;
+  grid.innerHTML=d.items.slice(0,9).map(newsCard).join('');
+  status.innerHTML = d.live
+    ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block"></span> חי · עודכן ${new Date(d.at).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`
+    : `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--gold)" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg> כותרות לדוגמה · לא נטען חיבור חי`;
+}
+function tickerSet(items){
+  const sep='<span class="ticker-sep" aria-hidden="true">◆</span>';
+  return items.map(it=>{
+    const time=it.dt?`<span class="t-time">${clockMini()} ${esc(fmtShort(it.dt))}</span>`:'';
+    const inner=`<span class="src">${esc(it.src||'חדשות')}</span><span class="ttl">${esc(it.t)}</span>${time}`;
+    return it.link?`<a class="ticker-item" dir="rtl" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<span class="ticker-item" dir="rtl">${inner}</span>`;
+  }).join(sep)+sep;
+}
+function mountTicker(d){
+  const el=document.getElementById('ticker'); if(!el)return;
+  const items=(d&&d.items?d.items:[]).slice(0,12);
+  if(!items.length){return}
+  const set=tickerSet(items); const dur=Math.max(34,items.length*6);
+  el.innerHTML=`<div class="ticker-label"><span class="dot"></span><span>${d&&d.live?'מבזקים · חי':'מבזקים'}</span></div>`+
+    `<div class="ticker-viewport"><div class="ticker-track" style="animation-duration:${dur}s">${set}${set}</div></div>`;
+}
+function tickerLoading(){
+  const el=document.getElementById('ticker'); if(!el)return;
+  el.innerHTML=`<div class="ticker-label"><span class="dot"></span><span>מבזקים</span></div><div class="ticker-viewport"><div class="ticker-track" style="animation:none"><span class="ticker-item" dir="rtl">טוען כותרות עדכניות…</span></div></div>`;
+}
+async function loadNews(force){
+  const grid=document.getElementById('news-grid'), status=document.getElementById('news-status');
+  if(grid){grid.innerHTML=Array.from({length:6}).map(()=>'<div class="skel"></div>').join('');status.innerHTML='<span class="spin"></span> מושך כותרות עדכניות…';}
+  tickerLoading();
+  const d=await getNews(force);
+  renderNews(d); mountTicker(d);
+}
+if(!window.__newsTimer){window.__newsTimer=setInterval(async()=>{const d=await getNews(true);mountTicker(d);renderNews(d);},5*60*1000);}
+async function fetchWikiTimestamp(){
+  const el=document.getElementById('wiki-updated'); if(!el)return;
+  try{
+    const r=await fetch('https://he.wikipedia.org/w/api.php?action=query&prop=revisions&titles='+encodeURIComponent('הבחירות לכנסת העשרים ושש')+'&rvprop=timestamp&format=json&origin=*',{signal:AbortSignal.timeout(7000)});
+    const j=await r.json(); const pages=j.query.pages; const pg=pages[Object.keys(pages)[0]];
+    const ts=pg.revisions?.[0]?.timestamp;
+    el.textContent= ts? ('עודכן '+relTime(new Date(ts))) : 'מקור חי';
+  }catch(e){ el.textContent='מקור חי'; }
+}
+
+/* ----- BUDGET SIMULATOR ----- */
+function viewBudget(){
+  const B=DATA.budget;
+  const html=`<div class="page"><div class="wrap" style="max-width:880px">
+    <div class="page-head"><span class="kicker">אתה שר האוצר, לשתי דקות</span><h1>סימולטור התקציב</h1>
+    <p>${esc(B.intro)}</p></div>
+    <div class="budget-status" id="budget-status"></div>
+    <div class="budget-cats" id="budget-cats"></div>
+    <div class="budget-actions">
+      <button class="btn btn-ghost btn-sm" id="budget-reset">${refreshIcon()} אפס לתקציב הריאלי 2025</button>
+      <button class="btn btn-primary btn-sm" id="budget-submit">הגש תקציב מאוזן</button>
+    </div>
+    <div id="budget-result"></div>
+    <p class="budget-note">${warnIcon()} <span>${esc(B.note)}</span></p>
+  </div></div>`;
+  return {html, after:initBudgetSim};
+}
+function initBudgetSim(){
+  const B=DATA.budget, cats=B.categories, U=B.unit||'מ׳';
+  const nis=pct=>Math.round(pct/100*B.totalNis);
+  let vals=cats.map(c=>c.start);
+  const catsEl=document.getElementById('budget-cats'), statusEl=document.getElementById('budget-status'), resEl=document.getElementById('budget-result');
+  const total=()=>vals.reduce((a,b)=>a+b,0);
+  function renderCats(){
+    catsEl.innerHTML=cats.map((c,i)=>`
+      <div class="bcat">
+        <div class="bcat-top"><span class="bcat-name"><span class="sw" style="background:${c.color}"></span>${esc(c.name)}</span>
+          <span class="bcat-val"><span class="pct" id="bval-${i}">${vals[i]}%</span><span class="nis" id="bnis-${i}">${nis(vals[i])} ${U} ₪</span></span></div>
+        <input class="bslider" type="range" min="0" max="40" step="1" value="${vals[i]}" data-i="${i}" style="accent-color:${c.color}" aria-label="${esc(c.name)}">
+        <div class="bcat-note" id="bnote-${i}">${esc(c.cut)}</div>
+      </div>`).join('');
+    catsEl.querySelectorAll('.bslider').forEach(sl=>sl.addEventListener('input',e=>{
+      const i=+e.target.dataset.i; vals[i]=+e.target.value; const c=cats[i];
+      document.getElementById('bval-'+i).textContent=vals[i]+'%';
+      document.getElementById('bnis-'+i).textContent=nis(vals[i])+' '+U+' ₪';
+      document.getElementById('bnote-'+i).textContent = vals[i]>c.start? c.grow : c.cut;
+      renderStatus();
+    }));
+  }
+  function renderStatus(){
+    const t=total(), diff=t-B.total; let cls,txt;
+    if(diff===0){cls='ok';txt='מאוזן ✓ · בדיוק 100%. אפשר להגיש.';}
+    else if(diff>0){cls='over';txt='חריגה: +'+diff+'% ('+nis(diff)+' '+U+' ₪). חייבים לקצץ במקום אחר.';}
+    else {cls='under';txt='חוסר: '+diff+'% ('+nis(-diff)+' '+U+' ₪). נשאר לך לחלק.';}
+    statusEl.className='budget-status '+cls;
+    statusEl.innerHTML=`<div class="bs-top"><span class="bs-total">סך הכול: <strong>${t}%</strong> · ${nis(t)} ${U} ₪</span><span class="bs-msg">${txt}</span></div><div class="bs-bar"><i style="transform:scaleX(${Math.min(100,t)/100})"></i></div>`;
+    const sub=document.getElementById('budget-submit'); if(sub)sub.disabled=diff!==0;
+  }
+  function reset(){vals=cats.map(c=>c.start);renderCats();renderStatus();resEl.innerHTML='';}
+  document.getElementById('budget-reset').addEventListener('click',reset);
+  document.getElementById('budget-submit').addEventListener('click',()=>{
+    const top=cats.map((c,i)=>({c,d:vals[i]-c.start})).filter(x=>x.d!==0).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,4);
+    const matches=matchBudgetParty(vals), m=matches[0];
+    resEl.innerHTML=`<div class="budget-done">
+      <div class="bd-h">${checkIcon()} תקציב מאוזן. הנה מה שעשית</div>
+      ${top.length?`<p class="bd-sub">השינויים הגדולים שלך מול התקציב הריאלי 2025:</p><ul class="bd-list">${top.map(x=>`<li><span class="sw" style="background:${x.c.color}"></span><strong>${esc(x.c.name)}</strong>: ${x.d>0?'הגדלת ב‑'+x.d+'% ('+nis(x.d)+' '+U+' ₪)':'קיצצת ב‑'+(-x.d)+'% ('+nis(-x.d)+' '+U+' ₪)'}</li>`).join('')}</ul>`:'<p class="bd-sub">השארת את התקציב כמו הריאלי — גם זו בחירה לגיטימית.</p>'}
+      ${m?`<div class="bd-match">
+        <div class="bd-match-h">המפלגה שהכי תואמת את התקציב שלך</div>
+        <a class="bd-match-row" href="#/party/${m.p.id}"><span class="badge" style="background:${m.p.color}">${esc(m.p.abbr)}</span>
+          <span class="bd-match-info"><span class="nm">${esc(m.p.name)} <span class="pct">${m.pct}% התאמה</span></span><span class="bd-match-sub">לפי סדרי העדיפויות התקציביים שלה. לחץ לעמוד המפלגה ›</span></span></a>
+        ${matches.slice(1,3).map(x=>`<div class="bd-match-mini"><span class="badge" style="background:${x.p.color}">${esc(x.p.abbr)}</span><span>${esc(x.p.name)}</span><span class="pct">${x.pct}%</span></div>`).join('')}
+      </div>`:`<div class="bd-match"><div class="bd-match-h">לא שינית מספיק כדי לזהות התאמה</div><p class="bd-sub" style="margin:0">הזז כמה סליידרים מהתקציב הריאלי כדי לראות איזו מפלגה הכי קרובה לעדיפויות שלך.</p></div>`}
+      <div class="bd-teach">${esc(B.teaching)}</div>
+    </div>`;
+    resEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+  renderCats(); renderStatus();
+}
+function matchBudgetParty(vals){
+  const B=DATA.budget, cats=B.categories, pb=B.partyBudget||{};
+  return DATA.parties.map(p=>{
+    const pref=pb[p.id]||{}; let agree=0,total=0;
+    cats.forEach((c,i)=>{
+      const ud=vals[i]-c.start; if(ud===0)return; total++;
+      const pv=pref[c.id]||0; if(pv!==0){ if(Math.sign(ud)===Math.sign(pv))agree++; else agree--; }
+    });
+    return {p, pct: total>0?Math.round(((agree/total)+1)/2*100):null};
+  }).filter(x=>x.pct!==null).sort((a,b)=>b.pct-a.pct);
+}
+
+/* ----- TRUST CENTER (מנגנון אמון עצמאי) ----- */
+function statusBadge(s){
+  const map={pass:{t:'תקין',c:'good',i:checkIcon()},warn:{t:'לבדיקה',c:'warn',i:warnIcon()},fail:{t:'תקלה',c:'fail',i:warnIcon()}};
+  const m=map[s]||map.warn; return `<span class="audit-badge ${m.c}">${m.i} ${m.t}</span>`;
+}
+function neutralityScan(){
+  const terms=DATA.integrity.loadedTerms, hits=[];
+  const scan=(text,where)=>{ if(!text)return; terms.forEach(t=>{ if(text.indexOf(t)>=0) hits.push({term:t,where}); }); };
+  DATA.issues.forEach(i=>scan(i.text,'נושא: '+i.title));
+  DATA.parties.forEach(p=>scan(p.essence,'מהות: '+p.name));
+  DATA.statements.statements.forEach(s=>scan(s.text,'שאלה: '+s.topic));
+  Object.values(DATA.explainers).forEach(e=>{scan(e.fact,'עובדה: '+e.title);scan(e.dispute,'מחלוקת: '+e.title);});
+  return hits;
+}
+function runAudit(){
+  const checks=[]; const add=(id,label,status,detail,flagged)=>checks.push({id,label,status,detail,flagged});
+  const sts=DATA.statements.statements, polls=DATA.polls.polls, exIds=Object.keys(DATA.explainers);
+  const pollSrc=polls.filter(p=>p.sourceUrl).length;
+  add('poll-src','מקור לכל סקר', pollSrc===polls.length?'pass':'warn', `${pollSrc} מתוך ${polls.length} הסקרים כוללים קישור ישיר לסקר המלא.`);
+  const exSrc=exIds.filter(k=>DATA.explainers[k].source&&DATA.explainers[k].source.url).length;
+  add('ex-src','מקור לכל הסבר נושא', exSrc===exIds.length?'pass':'warn', `${exSrc} מתוך ${exIds.length} ההסברים כוללים מקור מצוטט.`);
+  add('meta-src','מקורות‑על רשמיים מתועדים', (DATA.meta.sources||[]).length>=3?'pass':'warn', `${(DATA.meta.sources||[]).length} מקורות רשמיים מתועדים במאגר.`);
+  const partiesComplete=DATA.parties.every(p=>sts.every(s=>typeof p.positions[s.id]==='number'));
+  add('party-pos','עמדה מלאה לכל מפלגה בכל נושא', partiesComplete?'pass':'fail', partiesComplete?`כל ${DATA.parties.length} המפלגות עם עמדה מוגדרת בכל ${sts.length} הנושאים.`:'נמצאו עמדות חסרות.');
+  add('party-pos-src','עמדות המפלגות: רמת אימות','warn','עמדות המפלגות הן סיכום מתומצת מפלטפורמות פומביות, ולא ציטוט מילולי רשמי. מומלץ להצליב מול תוכנית המפלגה הרשמית.');
+  const stEx=sts.every(s=>DATA.explainers[s.explainer]);
+  add('st-ex','הסבר ניטרלי לכל שאלה בשאלון', stEx?'pass':'fail', stEx?'לכל שאלה מקושר עמוד הסבר קיים.':'נמצאה שאלה ללא הסבר.');
+  const exComplete=exIds.every(k=>{const e=DATA.explainers[k];return e.fact&&e.dispute&&e.for&&e.against;});
+  add('ex-complete','כל הסבר כולל עובדה + מחלוקת + שני הצדדים', exComplete?'pass':'fail', exComplete?'מבנה דו‑צדדי מלא (steelman) בכל ההסברים.':'נמצא הסבר חסר רכיב.');
+  const posRange=DATA.parties.every(p=>sts.every(s=>p.positions[s.id]>=-2&&p.positions[s.id]<=2));
+  add('pos-range','ערכי עמדות בטווח התקין', posRange?'pass':'fail','כל ערכי העמדות בין ‎-2‎ ל‎+2.');
+  const bSum=DATA.budget.categories.reduce((a,c)=>a+c.start,0);
+  add('budget-sum','התקציב ההתחלתי מאוזן ל‑100%', bSum===100?'pass':'fail', `סכום קטגוריות התקציב: ${bSum}% (כ‑${DATA.budget.totalNis} מיליארד ₪).`);
+  const flagged=neutralityScan();
+  add('neutrality','שפה ניטרלית בטקסט העובדתי', flagged.length===0?'pass':'warn', flagged.length===0?`נסרקו ${DATA.integrity.loadedTerms.length} מונחים טעונים, ולא נמצא אף אחד בטקסט שאמור להיות ניטרלי.`:`${flagged.length} מופעים לבדיקה אנושית (הסריקה אינה כוללת את 'טיעוני הצדדים').`, flagged);
+  const days=Math.max(0,Math.round((Date.now()-new Date(DATA.meta.lastUpdated))/86400000));
+  add('fresh','רעננות הנתונים', days<=120?'pass':'warn', `הנתונים עודכנו לפני ${days} ימים (${heDate(DATA.meta.lastUpdated)}).`);
+  return checks;
+}
+function viewTrust(){
+  const I=DATA.integrity, audit=runAudit();
+  const neu=audit.find(c=>c.id==='neutrality'); const flagged=(neu&&neu.flagged)||[];
+  const pass=audit.filter(a=>a.status==='pass').length, warn=audit.filter(a=>a.status==='warn').length, fail=audit.filter(a=>a.status==='fail').length;
+  const overall=fail>0?'fail':(warn>0?'warn':'pass');
+  const overallTxt=fail>0?'נמצאו תקלות שדורשות תיקון':(warn>0?'תקין · עם פריטים לבדיקה אנושית':'כל הבדיקות עברו');
+  const datasets=[
+    {n:'מפלגות ומנדטים',src:'ועדת הבחירות / הכנסת ה‑25',st:'מאומת'},
+    {n:'עמדות מפלגות',src:'פלטפורמות פומביות (סיכום)',st:'סיכום מתומצת'},
+    {n:'סקרים',src:'חדשות 12 / כאן / i24',st:'מדווח + מתוארך'},
+    {n:'הסברי נושאים',src:'IDI / משרד האוצר / ויקיפדיה',st:'מאומת + ממוקר'},
+    {n:'תקציב המדינה',src:'משרד האוצר / obudget (2025)',st:'מאומת'},
+    {n:'חדשות',src:'Google News (קישור למקור)',st:'חי + ממוקר'}
+  ];
+  const html=`<div class="page"><div class="wrap" style="max-width:900px">
+    <div class="page-head"><span class="kicker">עצמאי · מכני · שקוף</span><h1>מרכז האמון</h1>
+    <p>האמון במידע הוא הדבר החשוב ביותר כאן. לכן בנינו מנגנון עצמאי שבודק את התוכן באופן מכני: שכל טענה ממוקרת, שהשפה ניטרלית, ושהנתונים שלמים ועקביים. הבדיקה רצה עכשיו, בזמן אמת, על אותם נתונים שאתה רואה.</p></div>
+
+    <div class="audit-summary ${overall}">
+      <div class="as-icon">${overall==='pass'?checkIcon():warnIcon()}</div>
+      <div><div class="as-title">${esc(overallTxt)}</div>
+      <div class="as-counts">${pass} עברו · ${warn} לבדיקה · ${fail} תקלות · נבדק ${heDate(DATA.meta.lastUpdated)}</div></div>
+    </div>
+
+    <h2 class="trust-h">מבדק התקינות האוטומטי</h2>
+    <p class="trust-sub">מנגנון עצמאי שאינו מניח שהתוכן נכון, אלא בודק אותו. כל בדיקה רצה על קבצי הנתונים החיים, ואפשר לשחזר אותה מול המאגר הפתוח.</p>
+    <div class="audit-list">
+      ${audit.map(c=>`<div class="audit-item ${c.status}">
+        <div class="ai-top">${statusBadge(c.status)}<span class="ai-label">${esc(c.label)}</span></div>
+        <div class="ai-detail">${esc(c.detail)}</div>
+        ${c.flagged&&c.flagged.length?`<div class="ai-flags">${c.flagged.map(f=>`<span class="flag">"${esc(f.term)}" · ${esc(f.where)}</span>`).join('')}</div>`:''}
+      </div>`).join('')}
+    </div>
+
+    <h2 class="trust-h">מקור וסטטוס אימות לכל נתון</h2>
+    <div class="table-wrap"><table><thead><tr><th>נתון</th><th>מקור</th><th>סטטוס</th></tr></thead><tbody>
+      ${datasets.map(d=>`<tr><td>${esc(d.n)}</td><td>${esc(d.src)}</td><td><span class="vstatus">${esc(d.st)}</span></td></tr>`).join('')}
+    </tbody></table></div>
+
+    <h2 class="trust-h">אמנת הניטרליות</h2>
+    <ul class="charter">${I.charter.map(c=>`<li>${checkIcon()} <span>${esc(c)}</span></li>`).join('')}</ul>
+
+    <div class="trust-limits">${warnIcon()}<div><strong>גבולות המנגנון:</strong> ${esc(I.limits)}</div></div>
+
+    <div class="hero-actions" style="margin-top:24px">
+      <a href="#/database" class="btn btn-primary btn-sm">${svgIcon('db')} אמת בעצמך · למאגר הנתונים הפתוח</a>
+    </div>
+  </div></div>`;
+  return {html};
+}
+
+/* ----- DATABASE ----- */
+function viewDatabase(){
+  const parties=DATA.parties, polls=DATA.polls.polls;
+  const partyRows=parties.map(p=>`<tr>
+    <td><span class="swatch" style="background:${p.color}"></span><a href="#/party/${p.id}">${esc(p.name)}</a></td>
+    <td>${esc(p.leader)}</td><td>${esc(p.bloc)}</td><td>${p.seats||'—'}</td><td style="min-width:240px">${esc(p.status2026)}</td>
+  </tr>`).join('');
+  const pollRows=polls.map(pl=>`<tr>
+    <td style="white-space:nowrap">${esc(pl.date)}</td><td>${esc(pl.pollster)}</td>
+    <td>${pl.figures.length?pl.figures.map(f=>esc(f.party)+' '+f.seats).join(' · '):'—'}</td>
+    <td>${esc(pl.summary)}</td><td><a href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener noreferrer">מקור ↗</a></td>
+  </tr>`).join('');
+  const stRows=DATA.statements.statements.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.topic)}</td><td>${esc(s.text)}</td></tr>`).join('');
+  const dlFiles=Object.keys(DATA).map(k=>`<button type="button" class="dl" onclick="downloadData('${k}')">${downloadIcon()} ${k}.json</button>`).join('');
+  const html=`<div class="page"><div class="wrap">
+    <div class="page-head"><span class="kicker">שקיפות מלאה</span><h1>מאגר הנתונים</h1>
+    <p>כל מה שהאפליקציה מתבססת עליו, חשוף וגלוי. אפשר לעיין בכל טבלה, לבדוק כל מקור, ולהוריד כל קובץ נתונים גולמי. ${esc(DATA.meta.asOf)}.</p></div>
+
+    <div class="dl-row" style="margin-bottom:34px">${dlFiles}</div>
+
+    <div class="db-section"><h2>מפלגות ורשימות</h2><div class="sub">בסיס: תוצאות הכנסת ה‑25. סטטוס 2026 מסומן בנפרד.</div>
+      <div class="table-wrap"><table><thead><tr><th>מפלגה</th><th>מנהיג</th><th>גוש</th><th>מנדטים</th><th>מצב 2026</th></tr></thead><tbody>${partyRows}</tbody></table></div>
+    </div>
+
+    <div class="db-section"><h2>סקרים</h2><div class="sub">${esc(DATA.polls.note)}</div>
+      <div class="table-wrap"><table><thead><tr><th>תאריך</th><th>מכון</th><th>נתוני כותרת</th><th>תקציר</th><th>מקור</th></tr></thead><tbody>${pollRows}</tbody></table></div>
+    </div>
+
+    <div class="db-section"><h2>שאלות השאלון</h2><div class="sub">12 האמירות שמזינות את חישוב ההתאמה והמפה.</div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>נושא</th><th>אמירה</th></tr></thead><tbody>${stRows}</tbody></table></div>
+    </div>
+
+    <div class="db-section"><h2>מקורות</h2><div class="sub">המקורות הרשמיים והפומביים שעליהם מבוססים הנתונים.</div>
+      <ul class="src-list">${DATA.meta.sources.map(s=>`<li>${svgIcon('news')}<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.name)} ↗</a></li>`).join('')}</ul>
+    </div>
+
+    <div class="disclaimer" style="margin-top:10px">${warnIcon()}<div>${DATA.meta.disclaimers.map(d=>esc(d)).join('<br><br>')}</div></div>
+  </div></div>`;
+  return {html};
+}
+
+/* ----- small icon helpers ----- */
+function chev(){return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'}
+function chevBack(){return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'}
+function refreshIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'}
+function downloadIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>'}
+function warnIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>'}
+function factIcon(){return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>'}
+function disputeIcon(){return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9h8M8 13h5M21 12a8 8 0 0 1-8 8H7l-4 2 1.3-4A8 8 0 1 1 21 12Z"/></svg>'}
+function bulbIcon(){return '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z"/></svg>'}
+function checkIcon(){return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg>'}
+function blindHTML(blind){
+  if(!blind.length) return `<div class="blind blind-clear">${checkIcon()}<div><strong>ענית על כל הנושאים.</strong> יפה. עכשיו ודא שאתה באמת מבין כל אחד מהם ולא רק ניחשת. חזור לכל נושא שמעורר ספק לפני שתצביע.</div></div>`;
+  return `<div class="blind">
+    <div class="blind-h">${bulbIcon()} נקודות עיוורות · אל תצביע על אלה בעיניים עצומות</div>
+    <p class="blind-sub">סימנת שאתה עדיין לומד את הנושאים הבאים (או דילגת עליהם). הנה ההסבר הניטרלי לכל אחד. שתי דקות עכשיו שוות יותר מהצבעה לא־מודעת.</p>
+    <div class="blind-grid">
+      ${blind.map(b=>`<a class="blind-item" href="#/issue/${b.st.explainer}"><span class="bt">${esc(b.st.topic)}</span><span class="bg">קרא את ההסבר ${chev()}</span></a>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ===================== BOOT ===================== */
+const EMBEDDED_DATA = {
+  meta: {"appName": "מצפן הבוחר", "tagline": "סדר את הראש לפני הבחירות", "election": "הבחירות לכנסת ה‑26 (צפויות בסתיו 2026)", "lastUpdated": "2026-06-20", "asOf": "כל הנתונים נכונים ליוני 2026", "disclaimers": ["כלי עצמאי, נייטרלי ולא־מפלגתי. איננו אומרים למי להצביע — אנחנו עוזרים להבין ולחשוב.", "מספרי המנדטים בכרטיסי המפלגות הם תוצאות הכנסת ה‑25 (נובמבר 2022). הם הבסיס היציב.", "המפה הפוליטית ל‑2026 תנודתית מאוד: יש מיזוגי רשימות (ביחד = בנט+לפיד; ליכוד+תקווה חדשה) ורשימות חדשות (ישר! של אייזנקוט). מצב הרשימות מסומן בנפרד בכל מפלגה.", "עמדות המפלגות בשאלון הן סיכום מתומצת מפלטפורמות פומביות — פישוט מכוון לצורך הכלי, לא ציטוט רשמי. כל הנתונים פתוחים לעיון ולעריכה בתיקיית data/.", "ה'דמויות המרכזיות' בכל מפלגה הן נציגים בולטים נכון להיום; רשימות 2026 טרם נסגרו רשמית."], "sources": [{"name": "ועדת הבחירות המרכזית — תוצאות הכנסת ה‑25", "url": "https://votes25.bechirot.gov.il/"}, {"name": "ויקיפדיה — הבחירות לכנסת ה‑26 (מתעדכן)", "url": "https://he.wikipedia.org/wiki/הבחירות_לכנסת_העשרים_ושש"}, {"name": "רשימת חברי הכנסת ה‑25", "url": "https://main.knesset.gov.il/mk/Pages/current.aspx"}, {"name": "סקרים — חדשות 12 / כאן / i24", "url": "https://www.mako.co.il/news-israel-elections"}, {"name": "Israel Policy Forum — 120 Project", "url": "https://israelpolicyforum.org/onetwenty/"}, {"name": "חדשות חיות — Google News בעברית", "url": "https://news.google.com/"}]},
+  issues: [{"id": "draft", "explainer": "draft", "ic": "shield", "title": "גיוס חרדים", "text": "מי משרת ומי פטור? המתח סביב גיוס בני הישיבות הוא הנושא שהפיל את הקואליציה ב‑2026.", "camps": ["שוויון בנטל", "שמירת עולם התורה"]}, {"id": "judicial", "explainer": "judicial", "ic": "scale", "title": "מערכת המשפט", "text": "עד כמה בית המשפט העליון יכול להגביל את הממשלה? הרפורמה המשפטית הציתה את המחאה הגדולה בתולדות המדינה.", "camps": ["חיזוק הנבחרים", "עצמאות שיפוטית"]}, {"id": "warday", "explainer": "war", "ic": "flag", "title": "המלחמה והיום שאחרי", "text": "כיצד מסיימים את המלחמה בעזה, ומי ישלוט שם אחר כך, מול שאלת החזרת החטופים.", "camps": ["הכרעה צבאית", "עסקה והסדר"]}, {"id": "religionstate", "explainer": "religionstate", "ic": "hands", "title": "דת ומדינה", "text": "שבת, נישואים, כשרות, חינוך. כמה דת תהיה במרחב הציבורי. ויכוח ישן שחזר לבעור.", "camps": ["חופש מדת", "שמירת המסורת"]}, {"id": "economy", "explainer": "economy", "ic": "coins", "title": "יוקר המחיה", "text": "מחירי הדיור, המזון והמסים. לאן הולך הכסף הציבורי, ומי נהנה מהתקציבים הייעודיים.", "camps": ["חלוקה שוויונית", "תקצוב מגזרי"]}, {"id": "territories", "explainer": "territories", "ic": "map", "title": "השטחים והסכסוך", "text": "ריבונות, התנחלויות, ושאלת המדינה הפלסטינית: לב המחלוקת על עתיד הגבולות.", "camps": ["ריבונות", "שתי מדינות"]}],
+  statements: {"scale": {"label": {"2": "מסכים מאוד", "1": "מסכים", "0": "ניטרלי / תלוי", "-1": "מתנגד", "-2": "מתנגד מאוד"}}, "axes": {"bloc": {"label": "גוש פוליטי", "posLabel": "ימין", "negLabel": "מרכז־שמאל", "weights": {"judicial": 1, "sovereign": 1, "gaza": 0.6, "twostate": -1, "arab": -1, "democracy": -1}}, "relig": {"label": "דת ומדינה", "posLabel": "דתי", "negLabel": "חילוני", "weights": {"draft": -1, "religion": -1, "coreedu": -1, "economy": -0.6}}}, "statements": [{"id": "draft", "topic": "גיוס חרדים", "explainer": "draft", "text": "יש לחייב בחורי ישיבה חרדים בשירות צבאי או אזרחי, ככל אזרח."}, {"id": "judicial", "topic": "מערכת המשפט", "explainer": "judicial", "text": "יש לקדם רפורמה שתחזק את כוח הממשלה והכנסת מול בית המשפט העליון."}, {"id": "gaza", "topic": "המלחמה בעזה", "explainer": "war", "text": "יש להמשיך בלחימה בעזה עד מיגור מוחלט של חמאס, גם על חשבון עסקת חטופים."}, {"id": "hostages", "topic": "חטופים", "explainer": "war", "text": "החזרת כל החטופים גוברת על המשך הלחימה, גם במחיר סיום המלחמה."}, {"id": "sovereign", "topic": "יהודה ושומרון", "explainer": "territories", "text": "יש להחיל ריבונות ישראלית על חלקים מיהודה ושומרון."}, {"id": "twostate", "topic": "הסכסוך", "explainer": "territories", "text": "פתרון שתי המדינות הוא הדרך הנכונה ליישוב הסכסוך."}, {"id": "religion", "topic": "דת ומדינה", "explainer": "religionstate", "text": "יש להרחיב תחבורה ציבורית בשבת ולאפשר נישואים אזרחיים."}, {"id": "economy", "topic": "יוקר המחיה", "explainer": "economy", "text": "יש לבטל תקציבים קואליציוניים ייעודיים ולהפנותם להוזלת יוקר המחיה לכלל."}, {"id": "arab", "topic": "שותפות ערבית", "explainer": "arab", "text": "ראוי לשלב מפלגות ערביות כשותפות מלאות בקואליציה שלטת."}, {"id": "democracy", "topic": "דמוקרטיה", "explainer": "democracy", "text": "השינויים שמקדמת הממשלה בשנים האחרונות מסכנים את הדמוקרטיה הישראלית."}, {"id": "coreedu", "topic": "חינוך", "explainer": "religionstate", "text": "יש לחייב לימודי ליבה (מתמטיקה, אנגלית) בכל מוסדות החינוך כתנאי למימון ממשלתי."}]},
+  parties: [{"id": "likud", "name": "הליכוד", "leader": "בנימין נתניהו", "bloc": "ימין", "seats": 32, "color": "#1B3A6B", "abbr": "הל", "essence": "מפלגת השלטון. ימין לאומי, ליברליזם כלכלי, ומובילת המהלך לשינוי מערכת המשפט.", "status2026": "רצה ב‑2026 לאחר מיזוג עם 'תקווה חדשה' של גדעון סער.", "positions": {"draft": -1, "judicial": 2, "gaza": 2, "hostages": -1, "sovereign": 1, "twostate": -2, "religion": -1, "economy": -1, "arab": -2, "democracy": -2, "coreedu": -1}, "candidates": [{"name": "בנימין נתניהו", "role": "ראש המפלגה וראש הממשלה. מנהיג הימין מזה כשלושה עשורים."}, {"name": "יריב לוין", "role": "ממובילי הרפורמה המשפטית; כיהן כשר המשפטים."}, {"name": "ישראל כ\"ץ", "role": "בכיר ותיק; כיהן בתיקי חוץ, אוצר וביטחון."}, {"name": "מירי רגב", "role": "קול עממי‑מזרחי בולט; תיק התחבורה."}, {"name": "ניר ברקת", "role": "איש העסקים של המפלגה; דגל בכלכלה ותעסוקה."}, {"name": "גדעון סער", "role": "יו\"ר 'תקווה חדשה' שהתמזגה לליכוד לקראת 2026."}]}, {"id": "yeshatid", "name": "יש עתיד", "leader": "יאיר לפיד", "bloc": "מרכז", "seats": 24, "color": "#19A6C9", "abbr": "יע", "essence": "מרכז חילוני־ליברלי. דגל בהפרדת דת ומדינה, ממלכתיות, והתנגדות לרפורמה המשפטית.", "status2026": "ב‑2026 רץ במסגרת רשימת 'ביחד' בראשות בנט (מיזוג עם בנט 2026, אפריל 2026).", "positions": {"draft": 2, "judicial": -2, "gaza": -1, "hostages": 1, "sovereign": -1, "twostate": 1, "religion": 2, "economy": 2, "arab": 0, "democracy": 2, "coreedu": 2}, "candidates": [{"name": "יאיר לפיד", "role": "מייסד ויו\"ר; כיהן כראש הממשלה וכראש האופוזיציה."}, {"name": "קארין אלהרר", "role": "נציגת אנשים עם מוגבלות; כיהנה כשרת אנרגיה."}, {"name": "מאיר כהן", "role": "רווחה וזכויות חברתיות."}, {"name": "ולדימיר בליאק", "role": "כלכלה ושקיפות תקציבית."}, {"name": "אורנה ברביבאי", "role": "אלופה במיל'; כלכלה ותעשייה."}]}, {"id": "mamlachti", "name": "המחנה הממלכתי", "leader": "בני גנץ", "bloc": "מרכז", "seats": 12, "color": "#0E6E64", "abbr": "המ", "essence": "מרכז ביטחוני־ממלכתי. מנסה לגשר בין ימין־מתון לשמאל סביב אחריות ואחדות.", "status2026": "גדי אייזנקוט פרש והקים את 'ישר!'. עתיד הרשימה ל‑2026 לא סופי.", "positions": {"draft": 2, "judicial": -1, "gaza": 0, "hostages": 1, "sovereign": -1, "twostate": 0, "religion": 1, "economy": 1, "arab": -1, "democracy": 1, "coreedu": 2}, "candidates": [{"name": "בני גנץ", "role": "יו\"ר; רמטכ\"ל לשעבר. דגל הממלכתיות והאחדות."}, {"name": "חילי טרופר", "role": "חברה, קהילה ותרבות."}, {"name": "פנינה תמנו‑שטה", "role": "שילוב יוצאי אתיופיה ומאבק בגזענות."}, {"name": "מתן כהנא", "role": "דת ומדינה מתוך עמדה דתית‑ליברלית."}]}, {"id": "shas", "name": "ש\"ס", "leader": "אריה דרעי", "bloc": "חרדי", "seats": 11, "color": "#2A2A2A", "abbr": "שס", "essence": "מפלגה חרדית־ספרדית. שמירה על עולם התורה, רשת חברתית, והגנה על מעמד הדת.", "status2026": "רצה בהרכבה המסורתי בראשות אריה דרעי.", "positions": {"draft": -2, "judicial": 1, "gaza": 1, "hostages": 0, "sovereign": 0, "twostate": -1, "religion": -2, "economy": -2, "arab": -1, "democracy": -1, "coreedu": -2}, "candidates": [{"name": "אריה דרעי", "role": "יו\"ר היסטורי; מנהיג הציבור החרדי‑ספרדי."}, {"name": "יואב בן צור", "role": "רווחה, עבודה וחברה."}, {"name": "משה ארבל", "role": "משפטן; תיקי פנים ובריאות."}, {"name": "מיכאל מלכיאלי", "role": "דת, מסורת ושירותי דת."}]}, {"id": "utj", "name": "יהדות התורה", "leader": "יצחק גולדקנופף", "bloc": "חרדי", "seats": 7, "color": "#3A3A52", "abbr": "יה", "essence": "מפלגה חרדית־אשכנזית. מיקוד מוחלט בשמירת מעמד לומדי התורה ופטור מגיוס.", "status2026": "שותפות אגודת ישראל ודגל התורה; הצביעה לפיזור הכנסת על רקע משבר הגיוס.", "positions": {"draft": -2, "judicial": 1, "gaza": 0, "hostages": 0, "sovereign": 0, "twostate": -1, "religion": -2, "economy": -2, "arab": -1, "democracy": 0, "coreedu": -2}, "candidates": [{"name": "יצחק גולדקנופף", "role": "יו\"ר; נציג החסידויות (אגודת ישראל)."}, {"name": "משה גפני", "role": "ותיק; יו\"ר ועדת הכספים."}, {"name": "אורי מקלב", "role": "נציג 'דגל התורה'."}, {"name": "יעקב אשר", "role": "חקיקה וכלכלה במגזר החרדי."}]}, {"id": "tzionut", "name": "הציונות הדתית", "leader": "בצלאל סמוטריץ'", "bloc": "ימין", "seats": 14, "color": "#8A4B1E", "abbr": "צד", "essence": "ימין דתי־לאומי. ריבונות ביו\"ש, חיזוק ההתיישבות, ושינוי מערכת המשפט.", "status2026": "רצה ב‑2026 בנפרד מעוצמה יהודית (ב‑2022 רצו ברשימה משותפת, 14 מנדטים).", "positions": {"draft": -1, "judicial": 2, "gaza": 2, "hostages": -2, "sovereign": 2, "twostate": -2, "religion": -2, "economy": -1, "arab": -2, "democracy": -2, "coreedu": -1}, "candidates": [{"name": "בצלאל סמוטריץ'", "role": "יו\"ר; כיהן כשר האוצר. ריבונות והתיישבות."}, {"name": "אורית סטרוק", "role": "התיישבות ומשימות לאומיות."}, {"name": "סימכה רוטמן", "role": "יו\"ר ועדת חוקה; הוביל את חקיקת הרפורמה."}, {"name": "אופיר סופר", "role": "קליטה והתיישבות."}]}, {"id": "otzma", "name": "עוצמה יהודית", "leader": "איתמר בן גביר", "bloc": "ימין", "seats": 0, "color": "#B5832A", "abbr": "עו", "essence": "ימין לאומי. דגש על ביטחון פנים, יד קשה, וריבונות.", "status2026": "רצה ב‑2026 בנפרד; ב‑2022 רצה במסגרת רשימת הציונות הדתית.", "positions": {"draft": -1, "judicial": 2, "gaza": 2, "hostages": -2, "sovereign": 2, "twostate": -2, "religion": -1, "economy": -1, "arab": -2, "democracy": -2, "coreedu": -1}, "candidates": [{"name": "איתמר בן גביר", "role": "יו\"ר; כיהן כשר לביטחון לאומי. יד קשה וביטחון פנים."}, {"name": "יצחק קרויזר", "role": "ביטחון ומשילות."}, {"name": "צביקה פוגל", "role": "ריבונות וביטחון."}, {"name": "לימור סון הר מלך", "role": "התיישבות."}]}, {"id": "beytenu", "name": "ישראל ביתנו", "leader": "אביגדור ליברמן", "bloc": "ימין", "seats": 6, "color": "#5C6B7A", "abbr": "יב", "essence": "ימין חילוני. שילוב נדיר של קו ביטחוני נצי עם מאבק חריף בכפייה הדתית ובפטור החרדי.", "status2026": "רצה בראשות אביגדור ליברמן.", "positions": {"draft": 2, "judicial": -1, "gaza": 1, "hostages": 0, "sovereign": 0, "twostate": -1, "religion": 2, "economy": 1, "arab": -2, "democracy": 1, "coreedu": 2}, "candidates": [{"name": "אביגדור ליברמן", "role": "יו\"ר. ימין חילוני; מאבק בכפייה הדתית."}, {"name": "עודד פורר", "role": "כלכלה וחקלאות."}, {"name": "יוליה מלינובסקי", "role": "קהילת יוצאי בריה\"מ; רווחה."}, {"name": "חמד עמאר", "role": "נציג העדה הדרוזית."}]}, {"id": "democrats", "name": "הדמוקרטים", "leader": "יאיר גולן", "bloc": "שמאל", "seats": 0, "color": "#C13B5B", "abbr": "דמ", "essence": "שמאל. איחוד העבודה ומרצ. זכויות אדם, שלום, שוויון אזרחי, והגנה על הדמוקרטיה.", "status2026": "רשימה מאוחדת של העבודה ומרצ בראשות יאיר גולן.", "positions": {"draft": 2, "judicial": -2, "gaza": -1, "hostages": 2, "sovereign": -2, "twostate": 2, "religion": 2, "economy": 2, "arab": 2, "democracy": 2, "coreedu": 2}, "candidates": [{"name": "יאיר גולן", "role": "יו\"ר; אלוף במיל'. הוביל את איחוד העבודה ומרצ."}, {"name": "נעמה לזימי", "role": "צדק חברתי וזכויות עובדים."}, {"name": "גילעד קריב", "role": "רב רפורמי; דת ומדינה וזכויות אדם."}]}, {"id": "hadash", "name": "חד\"ש–תע\"ל", "leader": "איימן עודה", "bloc": "ערבי", "seats": 5, "color": "#C0392B", "abbr": "חד", "essence": "רשימה ערבית־יהודית של שמאל. שוויון אזרחי מלא, סיום הכיבוש, וצדק חברתי.", "status2026": "שיתוף חד\"ש ותע\"ל; הרכב הרשימה ל‑2026 נבחן.", "positions": {"draft": 0, "judicial": -2, "gaza": -2, "hostages": 2, "sovereign": -2, "twostate": 2, "religion": 1, "economy": 2, "arab": 2, "democracy": 2, "coreedu": 1}, "candidates": [{"name": "איימן עודה", "role": "יו\"ר חד\"ש. שוויון אזרחי וצדק חברתי."}, {"name": "אחמד טיבי", "role": "יו\"ר תע\"ל. זכויות האזרחים הערבים."}, {"name": "עופר כסיף", "role": "נציג יהודי בחד\"ש; שמאל סוציאליסטי."}, {"name": "עאידה תומא סלימאן", "role": "זכויות נשים ומיעוטים."}]}, {"id": "raam", "name": "רע\"ם", "leader": "מנסור עבאס", "bloc": "ערבי", "seats": 5, "color": "#1E8449", "abbr": "רע", "essence": "רשימה ערבית־אסלאמית פרגמטית. שיפור מעמד החברה הערבית מתוך שותפות פוליטית.", "status2026": "רצה בראשות מנסור עבאס בקו פרגמטי.", "positions": {"draft": 0, "judicial": -1, "gaza": -2, "hostages": 2, "sovereign": -2, "twostate": 1, "religion": -1, "economy": 2, "arab": 2, "democracy": 1, "coreedu": 0}, "candidates": [{"name": "מנסור עבאס", "role": "יו\"ר. קו פרגמטי של שותפות פוליטית."}, {"name": "וליד טאהא", "role": "תקציבים ופיתוח לחברה הערבית."}, {"name": "אימאן ח'טיב יאסין", "role": "נציגות נשים בחברה הערבית."}]}, {"id": "bennett", "name": "ביחד (בנט)", "leader": "נפתלי בנט", "bloc": "מרכז", "seats": 0, "color": "#E07820", "abbr": "בנ", "isNew": true, "essence": "ימין־מרכז ממלכתי. מציב את עצמו כחלופה מאחדת לנתניהו, מעל הקו הדתי־חילוני.", "status2026": "רשימת 'ביחד' — מיזוג בנט 2026 עם יש עתיד של לפיד (אפריל 2026), בראשות בנט.", "positions": {"draft": 1, "judicial": 0, "gaza": 1, "hostages": 0, "sovereign": 1, "twostate": -1, "religion": 0, "economy": 1, "arab": -1, "democracy": 0, "coreedu": 1}, "candidates": [{"name": "נפתלי בנט", "role": "יו\"ר 'ביחד'; ראש ממשלה לשעבר. ימין‑מרכז ממלכתי."}, {"name": "יאיר לפיד", "role": "שותף בכיר (מיזוג יש עתיד, אפריל 2026)."}]}, {"id": "yashar", "name": "יש\"ר", "leader": "גדי אייזנקוט", "bloc": "מרכז", "seats": 0, "color": "#1F6FB2", "abbr": "יר", "isNew": true, "essence": "מרכז ביטחוני. רשימה חדשה בראשות רמטכ\"ל לשעבר; ממלכתיות, אחריות ביטחונית ושוויון בנטל.", "status2026": "רשימה חדשה (2026) בראשות גדי אייזנקוט; מזנקת בסקרים למקומות הראשונים.", "positions": {"draft": 2, "judicial": -1, "gaza": 0, "hostages": 1, "sovereign": -1, "twostate": 0, "religion": 1, "economy": 1, "arab": -1, "democracy": 1, "coreedu": 2}, "candidates": [{"name": "גדי אייזנקוט", "role": "יו\"ר; רמטכ\"ל לשעבר. ממלכתיות ואחריות ביטחונית."}]}],
+  polls: {"note": "מספרי הסקרים הם נתוני הכותרת שדווחו בתקשורת (לא תמיד פירוט מלא של כל 120 המנדטים). לכל סקר מצורף קישור לסקר המלא. הסקרים תנודתיים ומשתנים בין מכוני הסקרים.", "livePollsFeasibility": "אין כיום API ציבורי לסקרים, וטרם נפתח עמוד סקרים בוויקיפדיה לכנסת ה‑26. הנתונים כאן מתוחזקים ידנית; סקרים חדשים מוצפים אוטומטית בעמוד 'חדשות' דרך הזנת 'סקרים'.", "polls": [{"date": "2026-06-18", "pollster": "חדשות 12", "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-675e05b95f69d91027.htm", "summary": "הליכוד וישר של איזנקוט מתחזקות, בנט נחלש.", "figures": [{"party": "הליכוד", "seats": 22}, {"party": "ישר!", "seats": 21}, {"party": "ביחד (בנט)", "seats": 19}]}, {"date": "2026-05-20", "pollster": "חדשות 12", "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-ea5ad1f6e4f6e91027.htm", "summary": "הליכוד מובילה, בנט עדיין מעל איזנקוט שממשיך להתחזק.", "figures": [{"party": "הליכוד", "seats": 27}, {"party": "ביחד (בנט)", "seats": 23}, {"party": "ישר!", "seats": 16}]}, {"date": "2026-Q2", "pollster": "כאן חדשות", "sourceUrl": "https://www.kan.org.il/content/kan-news/politic/1043495/", "summary": "הליכוד מתחזקת; איזנקוט מוביל בהתאמה לראשות הממשלה.", "figures": []}, {"date": "2026-Q2", "pollster": "כאן חדשות", "sourceUrl": "https://www.kan.org.il/content/kan-news/politic/1055741/", "summary": "סקר דרמטי: איזנקוט עוקף את בנט, נתניהו נחלש.", "figures": []}, {"date": "2026-Q2", "pollster": "i24NEWS", "sourceUrl": "https://www.i24news.tv/he/news/israel-elections-2026/polls/artc-ca354d30", "summary": "ההתחזקות של איזנקוט באה בעיקר על חשבון בנט.", "figures": []}]},
+  explainers: {"draft": {"title": "גיוס חרדים — חוק הגיוס", "fact": "בישראל חל חוק שירות ביטחון. מאז קום המדינה ניתנו לבחורי ישיבה דחיות שירות גורפות ('תורתו אומנותו'). בג\"ץ פסל את ההסדר כבלתי־חוקתי כל עוד אין חוק שמעגן אותו, וחייב את המדינה לגייס או לחוקק חוק חדש. כיום אין חוק שמסדיר פטור — וזה הנושא שהפיל את הקואליציה ב‑2026.", "dispute": "זו אינה שאלה משפטית אלא ערכית: האם לימוד תורה הוא ערך לאומי שמצדיק פטור, או שכל אזרח חייב בשוויון בנטל — בייחוד אחרי שנות מלחמה ארוכות?", "for": {"label": "בעד שמירת הפטור", "text": "לימוד התורה הוא נשמת קיומו של העם היהודי ותנאי להמשכיותו. גיוס בכפייה יהרוס את עולם הישיבות ויקרע את החברה. זו זהות, לא השתמטות."}, "against": {"label": "בעד גיוס שוויוני", "text": "כשחיילים נהרגים, פטור גורף למגזר שלם אינו מוסרי ואינו בר‑קיימא. שוויון בנטל הוא תנאי לסולידריות חברתית ולצדק בסיסי."}, "source": {"name": "המכון הישראלי לדמוקרטיה — פטור החרדים", "url": "https://www.idi.org.il/"}}, "judicial": {"title": "מערכת המשפט — הרפורמה המשפטית", "fact": "לישראל אין חוקה שלמה אלא 'חוקי יסוד'. לבית המשפט העליון יש סמכות לפסול חוקים והחלטות ממשלה שנוגדים חוקי יסוד או שנחשבים 'בלתי סבירים'. הרפורמה שהוצעה ב‑2023 ביקשה לצמצם סמכות זו: להגביל פסילת חוקים, לשנות את הרכב הוועדה לבחירת שופטים, ולבטל את 'עילת הסבירות'. ההצעה הציתה את גל המחאה הגדול בתולדות המדינה.", "dispute": "השאלה אינה טכנית אלא ערכית: מי צריך להיות הסמכות העליונה — נבחרי הציבור (הכנסת והממשלה), או בית משפט בלתי־תלוי שמגן על זכויות מיעוט ועל גבולות הכוח?", "for": {"label": "תומכי הרפורמה", "text": "לבית המשפט נצברו סמכויות חסרות תקדים בעולם, בלי חוקה שמסמיכה אותו. הכרעות ערכיות צריכות להיות בידי נבחרי הציבור, לא בידי שופטים שממנים את עצמם."}, "against": {"label": "מתנגדי הרפורמה", "text": "בלי חוקה ובלי בית מחוקקים שני, בית המשפט הוא הבלם היחיד על כוח הרוב. החלשתו מרכזת כוח בלתי־מוגבל בידי הקואליציה ומסכנת זכויות מיעוט."}, "source": {"name": "המכון הישראלי לדמוקרטיה — הרפורמה המשפטית", "url": "https://www.idi.org.il/"}}, "war": {"title": "המלחמה בעזה והיום שאחרי", "fact": "מאז מתקפת ה‑7 באוקטובר 2023 מנהלת ישראל מלחמה בעזה. שני יעדים מרכזיים מתחרים לעיתים זה בזה: מיגור חמאס מצד אחד, והשבת החטופים מצד שני — שכן עסקאות חטופים כרוכות לרוב בהפסקת אש ובשחרור אסירים. שאלת 'היום שאחרי' (מי ישלוט בעזה) טרם הוכרעה.", "dispute": "מה גובר כשהיעדים מתנגשים: הכרעה צבאית מוחלטת של חמאס, או החזרת כל החטופים — גם במחיר סיום המלחמה?", "for": {"label": "בעד הכרעה צבאית", "text": "בלי מיגור חמאס הסכנה תשוב; ויתור תחת לחץ יתמרץ חטיפות עתידיות ויסכן את הביטחון לטווח הארוך."}, "against": {"label": "בעד עסקה והשבה", "text": "החזרת חיים היא ערך עליון ומחויבות המדינה לאזרחיה; אפשר להמשיך להילחם בחמאס גם בהמשך, אבל חטוף שמת לא חוזר."}, "source": {"name": "רקע — מלחמת חרבות ברזל", "url": "https://he.wikipedia.org/"}}, "territories": {"title": "השטחים, ההתנחלויות והסכסוך", "fact": "יהודה ושומרון (הגדה המערבית) נתונים בשליטה ישראלית מאז 1967, עם התיישבות ישראלית לצד אוכלוסייה פלסטינית במעמד מורכב. 'ריבונות/סיפוח' = החלת החוק הישראלי על שטחים; 'שתי מדינות' = הקמת מדינה פלסטינית לצד ישראל. הסטטוס‑קוו נמשך עשורים בלי הכרעה.", "dispute": "מה עתיד השטחים: ריבונות ישראלית והרחבת ההתיישבות, שמירה על המצב הקיים, או חלוקה והקמת מדינה פלסטינית?", "for": {"label": "בעד ריבונות/התיישבות", "text": "זכות היסטורית וצורך ביטחוני על לב הארץ; נסיגות העבר הביאו טרור ולא שלום; אין כיום שותף פלסטיני אמין להסכם."}, "against": {"label": "בעד הפרדה/שתי מדינות", "text": "שליטה מתמשכת על מיליוני פלסטינים בלי זכויות מסכנת את אופייה היהודי והדמוקרטי של ישראל; הפרדה היא אינטרס ישראלי מובהק."}, "source": {"name": "רקע — הסכסוך הישראלי־פלסטיני", "url": "https://he.wikipedia.org/"}}, "religionstate": {"title": "דת ומדינה", "fact": "בישראל אין הפרדה בין דת למדינה. הרבנות הראשית מנהלת נישואין, גירושין, כשרות וקבורה; ברוב הארץ אין תחבורה ציבורית בשבת; אין נישואים אזרחיים. במקביל, חלק ממוסדות החינוך החרדיים אינם מלמדים 'לימודי ליבה' (מתמטיקה, אנגלית) ועדיין מקבלים מימון ממשלתי.", "dispute": "כמה דת צריכה להיות במרחב הציבורי ובמימון המדינה: חופש מדת ושוויון אזרחי, או שמירה על אופי יהודי‑מסורתי?", "for": {"label": "בעד שמירת המסורת", "text": "הצביון היהודי הוא לב הזהות הלאומית; פגיעה בסטטוס‑קוו תקרע את העם ותפגע במסורת בת אלפי שנים."}, "against": {"label": "בעד חופש מדת ושוויון", "text": "כפייה דתית פוגעת בחירות הפרט ובשוויון; מימון מוסדות שאינם מלמדים ליבה פוגע בילדים עצמם ובכלכלה העתידית."}, "source": {"name": "רקע — דת ומדינה בישראל", "url": "https://www.idi.org.il/"}}, "economy": {"title": "יוקר המחיה ותקציב המדינה", "fact": "תקציב המדינה ממומן ממסים ומחולק בין משרדים (ביטחון, בריאות, חינוך, רווחה ועוד), וחלקו משמש להחזר חובות העבר. 'תקציבים קואליציוניים' הם כספים ייעודיים שמפלגות מקבלות עבור המגזרים שלהן תמורת הצטרפות לקואליציה. עיקרון יסוד: כל שקל שמוקצה למקום אחד אינו זמין למקום אחר.", "dispute": "לפי מה לחלק את הכסף הציבורי: צרכים אוניברסליים ושקיפות, או הסכמים מגזריים וקואליציוניים?", "for": {"label": "בעד תקצוב מגזרי", "text": "כל מגזר נאבק על צרכיו הלגיטימיים; הסכמים קואליציוניים הם חלק לגיטימי מדמוקרטיה קואליציונית, לא 'כסף מבוזבז'."}, "against": {"label": "בעד חלוקה שוויונית", "text": "תקציבים ייעודיים מעוותים סדרי עדיפויות ומנציחים אי‑שוויון; הכסף צריך להתחלק לפי צורך, לכלל האזרחים."}, "source": {"name": "רקע — תקציב המדינה", "url": "https://mof.gov.il/"}, "simulator": true}, "arab": {"title": "שותפות ערבית בשלטון", "fact": "כ‑21% מאזרחי ישראל הם ערבים, ומיוצגים במפלגות ערביות (חד\"ש‑תע\"ל, רע\"ם) וגם במפלגות יהודיות. ב‑2021 הצטרפה רע\"ם לראשונה בתולדות המדינה לקואליציה שלטת. השאלה אם מפלגות ערביות יכולות וצריכות להיות שותפות מלאות בממשלה היא מחלוקת פוליטית מתמשכת.", "dispute": "האם שילוב מפלגות ערביות בקואליציה הוא נורמליזציה ראויה של אזרחות שווה, או סיכון בשל עמדותיהן בנושאי ביטחון ולאום?", "for": {"label": "בעד שילוב מלא", "text": "חמישית מהאזרחים ראויים לייצוג בשלטון; שילוב מקדם שוויון, שירותים ושותפות אמיתית במקום הדרה."}, "against": {"label": "נגד או בזהירות", "text": "חלק מהמפלגות הערביות מתנגדות לאופי היהודי של המדינה או נוקטות עמדות בעייתיות בביטחון; שותפות מלאה אינה מובנת מאליה."}, "source": {"name": "רקע — החברה הערבית בפוליטיקה", "url": "https://www.idi.org.il/"}}, "democracy": {"title": "דמוקרטיה ושלטון החוק", "fact": "דמוקרטיה אינה רק שלטון הרוב, אלא גם מערכת של איזונים ובלמים: בית משפט עצמאי, תקשורת חופשית, צבא ממלכתי, וזכויות מיעוט. בשנים האחרונות מתנהל ויכוח עז על האם צעדי הממשלה (הרפורמה המשפטית, היחס לתקשורת ולמוסדות) מחזקים את שלטון הנבחרים או שוחקים את האיזונים.", "dispute": "האם השינויים מחזקים את הדמוקרטיה (שלטון הנבחרים), או מסכנים אותה (שחיקת האיזונים והבלמים)?", "for": {"label": "מחזק את הדמוקרטיה", "text": "דמוקרטיה היא שלטון העם דרך נבחריו; החזרת הכוח מגופים בלתי־נבחרים אל הנבחרים היא תיקון דמוקרטי, לא סכנה."}, "against": {"label": "מסכן את הדמוקרטיה", "text": "ריכוז כוח בלי בלמים, גם אם נבחר ברוב, מוביל ל'עריצות הרוב'; דמוקרטיה נמדדת בהגנתה על המיעוט ועל המוסדות."}, "source": {"name": "המכון הישראלי לדמוקרטיה", "url": "https://www.idi.org.il/"}}},
+  budget: {"intro": "זה תקציב מדינת ישראל, מבוסס על תקציב 2025 (כ‑620 מיליארד ש״ח). כל הסכומים במיליארדי ש״ח (מ׳). כדי להוסיף למשרד אחד, אתה חייב לקצץ באחר. נסה לאזן.", "note": "הסכומים והפרופורציות מבוססים על תקציב המדינה 2025, מעוגלים ומפושטים להמחשה (8 קטגוריות במקום מאות סעיפים). אינם נתון רשמי מדויק. מקורות: משרד האוצר, התקציב הפתוח (obudget), ומרכז המחקר והמידע של הכנסת.", "total": 100, "totalNis": 620, "unit": "מ׳", "teaching": "זה השיעור היחיד שחשוב להבין על תקציב: אין כסף חינם. כל שקל שמוסיפים למקום אחד נלקח ממקום אחר. כשמפלגה מבטיחה 'נשקיע בהכול בלי לקצץ' — שאל מאיפה הכסף.", "sources": [{"name": "משרד האוצר — תקציב המדינה 2025", "url": "https://www.gov.il/he/pages/state-budget-2025"}, {"name": "התקציב הפתוח (obudget)", "url": "https://obudget.org/"}, {"name": "מרכז המחקר והמידע של הכנסת — מבט על תקציב 2025", "url": "https://main.knesset.gov.il/About/pages/budget/budgetinfo8.aspx"}], "categories": [{"id": "welfare", "name": "רווחה וביטחון סוציאלי", "start": 24, "color": "#C13B5B", "cut": "קצבאות זקנה, נכות, ילדים, והבטחת הכנסה (כולל ביטוח לאומי). קיצוץ פוגע ישירות באוכלוסיות המוחלשות ביותר.", "grow": "חיזוק רשת הביטחון הסוציאלי, על חשבון משרדים אחרים."}, {"id": "defense", "name": "ביטחון", "start": 18, "color": "#1B3A6B", "cut": "צה\"ל, מוכנות והמלחמה. זינק מאוד מאז 2023. קיצוץ עלול לפגוע ביכולת ההגנה בעת מלחמה.", "grow": "חיזוק הצבא והמוכנות, על חשבון השירותים האזרחיים."}, {"id": "education", "name": "חינוך", "start": 15, "color": "#0E6E64", "cut": "מגן ועד אוניברסיטה. קיצוץ → כיתות גדולות ופחות שעות. ההשקעה משתלמת לטווח ארוך, לא מיידית.", "grow": "יותר מורים ושעות, על חשבון תחומים אחרים."}, {"id": "health", "name": "בריאות", "start": 10, "color": "#19A6C9", "cut": "בתי חולים, סל התרופות ורפואת קהילה. קיצוץ → תורים ארוכים יותר ועומס.", "grow": "קיצור תורים והרחבת סל התרופות, על חשבון משרדים אחרים."}, {"id": "debt", "name": "ריבית והחזר חוב", "start": 9, "color": "#7A736A", "cut": "החזר חובות העבר של המדינה. כמעט בלתי אפשרי לקצץ — מחויבות שכבר נוצרה. ניסיון להבריח אותה פוגע באמינות הכלכלית.", "grow": "בדרך כלל לא בוחרים להגדיל; זה תלוי בריבית ובגירעון."}, {"id": "internal", "name": "ביטחון פנים ומשפט", "start": 5, "color": "#5C6B7A", "cut": "משטרה, בתי סוהר ובתי משפט. קיצוץ משפיע על הסדר הציבורי ועל אכיפת החוק.", "grow": "יותר שיטור ואכיפה, על חשבון תחומים אחרים."}, {"id": "transport", "name": "תחבורה ותשתיות", "start": 4, "color": "#9A7B2E", "cut": "כבישים, רכבות ותשתית. אפשר לדחות, אך זה פוגע בצמיחה ומחמיר את הפקקים.", "grow": "פחות פקקים ותשתית טובה יותר, על חשבון תקציב שוטף."}, {"id": "other", "name": "אחר (מנהל, חקלאות, סביבה, תרבות, דת)", "start": 15, "color": "#8A4B1E", "cut": "עשרות משרדים ותחומים, כולל תקציבים ייעודיים וקואליציוניים. גמיש יחסית, אך כל קיצוץ פוגע במישהו.", "grow": "תמיכה בתחומים נוספים ובמגזרים, על חשבון הליבה."}], "partyBudget": {"likud": {"defense": 1, "internal": 1, "transport": 1}, "yeshatid": {"education": 1, "health": 1, "transport": 1, "other": -1}, "mamlachti": {"defense": 1, "education": 1, "health": 1}, "shas": {"welfare": 1, "other": 1}, "utj": {"welfare": 1, "other": 1, "defense": -1}, "tzionut": {"defense": 1, "internal": 1, "other": 1}, "otzma": {"internal": 1, "defense": 1, "other": 1}, "beytenu": {"defense": 1, "education": 1, "health": 1, "other": -1}, "democrats": {"welfare": 1, "health": 1, "education": 1, "defense": -1}, "hadash": {"welfare": 1, "health": 1, "education": 1, "defense": -1, "internal": -1}, "raam": {"welfare": 1, "education": 1, "health": 1, "transport": 1, "defense": -1}, "bennett": {"defense": 1, "education": 1, "transport": 1, "health": 1}, "yashar": {"defense": 1, "education": 1, "health": 1, "other": -1}}},
+  integrity: {"charter": ["כל טענה עובדתית באפליקציה מלווה במקור שאפשר לבדוק.", "בכל מחלוקת מוצג הטיעון החזק ביותר של כל הצדדים (steelman), לא רק של צד אחד.", "הפרדה מפורשת בין עובדה (מוסכמת) לבין ערך (שנוי במחלוקת).", "אין קידוד צבעוני של 'טוב מול רע' לעמדות פוליטיות: שני הצדדים מוצגים בצבעים נייטרליים שווים.", "כל הנתונים פתוחים לעיון ולהורדה, כך שכל אדם יכול לאמת בעצמו מול המקור.", "המנגנון הזה עצמאי: הוא בודק את התוכן באופן מכני, בלי להניח שהוא נכון מראש."], "loadedTerms": ["הרסני", "אסון", "קיצוני", "קיצונית", "מסוכן", "מסוכנת", "שקרן", "מושחת", "שחיתות", "בוגד", "בוגדני", "בגידה", "גזען", "גזעני", "פשיסט", "פשיזם", "נאלח", "חמדן", "טינופת", "דיקטטור", "דיקטטורה", "עריץ", "עריצות", "פושע", "פושעים", "מטורף", "איום", "נבזי", "מכוער", "טמבל", "אידיוט", "סכנה קיומית", "חורבן", "טרוריסט"], "termsNote": "מונחים טעונים שעלולים לסמן מסגור לא־ניטרלי. נסרקים רק בטקסט שאמור להיות ניטרלי (עובדות, תיאורי נושאים, מהות מפלגה, ניסוח שאלות), ולא בתוך 'הטיעון של כל צד', שאמור במכוון להיות משכנע. כל מופע שמסומן נועד לבדיקה אנושית, לא לפסילה אוטומטית.", "limits": "המנגנון אינו 'יודע את האמת'. הוא אוכף את התנאים לאמון: שכל טענה ממוקרת, מתוארכת, מאוזנת בין הצדדים, ומנוסחת בשפה ניטרלית. נכונות העובדות עצמן ניתנת לבדיקה ע\"י כל משתמש מול המקורות הפתוחים."},
+};
+
+function downloadData(key){
+  const blob=new Blob([JSON.stringify(DATA[key],null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=key+'.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function boot(){
+  Object.assign(DATA, EMBEDDED_DATA);
+  document.getElementById('foot-updated').textContent='עודכן: '+heDate(DATA.meta.lastUpdated);
+  document.getElementById('foot-disclaimer').innerHTML='<strong>שקיפות:</strong> '+esc(DATA.meta.disclaimers[2])+' '+esc(DATA.meta.disclaimers[3]);
+  document.getElementById('loading').style.display='none';
+  router();
+}
+boot();
+</script>
+</body>
+</html>
