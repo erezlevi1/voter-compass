@@ -1,0 +1,31 @@
+{
+  "note": "מספרי הסקרים הם נתוני הכותרת שדווחו בתקשורת (לא תמיד פירוט מלא של כל 120 המנדטים). לכל סקר מצורף קישור לסקר המלא. הסקרים תנודתיים ומשתנים בין מכוני הסקרים.",
+  "livePollsFeasibility":"אין כיום API ציבורי לסקרים, וטרם נפתח עמוד סקרים בוויקיפדיה לכנסת ה‑26. הנתונים כאן מתוחזקים ידנית; סקרים חדשים מוצפים אוטומטית בעמוד 'חדשות' דרך הזנת 'סקרים'.",
+  "polls":[
+    {
+      "date":"2026-06-18","pollster":"חדשות 12","sourceUrl":"https://www.mako.co.il/news-israel-elections/2026/Article-675e05b95f69d91027.htm",
+      "summary":"הליכוד וישר של איזנקוט מתחזקות, בנט נחלש.",
+      "figures":[{"party":"הליכוד","seats":22},{"party":"ישר!","seats":21},{"party":"ביחד (בנט)","seats":19}]
+    },
+    {
+      "date":"2026-05-20","pollster":"חדשות 12","sourceUrl":"https://www.mako.co.il/news-israel-elections/2026/Article-ea5ad1f6e4f6e91027.htm",
+      "summary":"הליכוד מובילה, בנט עדיין מעל איזנקוט שממשיך להתחזק.",
+      "figures":[{"party":"הליכוד","seats":27},{"party":"ביחד (בנט)","seats":23},{"party":"ישר!","seats":16}]
+    },
+    {
+      "date":"2026-Q2","pollster":"כאן חדשות","sourceUrl":"https://www.kan.org.il/content/kan-news/politic/1043495/",
+      "summary":"הליכוד מתחזקת; איזנקוט מוביל בהתאמה לראשות הממשלה.",
+      "figures":[]
+    },
+    {
+      "date":"2026-Q2","pollster":"כאן חדשות","sourceUrl":"https://www.kan.org.il/content/kan-news/politic/1055741/",
+      "summary":"סקר דרמטי: איזנקוט עוקף את בנט, נתניהו נחלש.",
+      "figures":[]
+    },
+    {
+      "date":"2026-Q2","pollster":"i24NEWS","sourceUrl":"https://www.i24news.tv/he/news/israel-elections-2026/polls/artc-ca354d30",
+      "summary":"ההתחזקות של איזנקוט באה בעיקר על חשבון בנט.",
+      "figures":[]
+    }
+  ]
+}

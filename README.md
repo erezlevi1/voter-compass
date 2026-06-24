@@ -1,6 +1,12 @@
 ﻿# מצפן הבוחר (Voter Compass)
 
-כלי הסברה נייטרלי לקראת הבחירות לכנסת ה-26. קובץ `index.html` יחיד ועצמאי שכולל בתוכו את כל הנתונים.
+כלי הסברה נייטרלי לקראת הבחירות לכנסת ה-26.
+
+## מבנה ה-repo
+- `index.html` — האפליקציה (בשורש; Vercel מגיש אותה ישירות).
+- `data/` — כל הנתונים שעליהם מתבססת האפליקציה (8 קבצי JSON):
+  meta, issues, statements, parties, polls, explainers, budget, integrity.
 
 ## פריסה ב-Vercel
-ייבוא ה-repo הזה ל-Vercel. Framework Preset: **Other**, ללא build. הקובץ `index.html` בשורש מוגש ישירות.
+ייבוא ה-repo. Framework Preset: Other, ללא build. `index.html` שבשורש
+קורא את `data/` מאותו origin.
