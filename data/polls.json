@@ -5,12 +5,12 @@
     {
       "date":"2026-06-18","pollster":"חדשות 12","sourceUrl":"https://www.mako.co.il/news-israel-elections/2026/Article-675e05b95f69d91027.htm",
       "summary":"הליכוד וישר של איזנקוט מתחזקות, בנט נחלש.",
-      "figures":[{"party":"הליכוד","seats":22},{"party":"ישר!","seats":21},{"party":"ביחד (בנט)","seats":19}]
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":22},{"partyId":"yashar","party":"יש\"ר","seats":21},{"partyId":"bennett","party":"ביחד (בנט)","seats":19}]
     },
     {
       "date":"2026-05-20","pollster":"חדשות 12","sourceUrl":"https://www.mako.co.il/news-israel-elections/2026/Article-ea5ad1f6e4f6e91027.htm",
       "summary":"הליכוד מובילה, בנט עדיין מעל איזנקוט שממשיך להתחזק.",
-      "figures":[{"party":"הליכוד","seats":27},{"party":"ביחד (בנט)","seats":23},{"party":"ישר!","seats":16}]
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":27},{"partyId":"bennett","party":"ביחד (בנט)","seats":23},{"partyId":"yashar","party":"יש\"ר","seats":16}]
     },
     {
       "date":"2026-Q2","pollster":"כאן חדשות","sourceUrl":"https://www.kan.org.il/content/kan-news/politic/1043495/",

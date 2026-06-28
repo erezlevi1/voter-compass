@@ -1148,10 +1148,41 @@ function runAudit(){
   add('qa-grounded','מנוע "שאל את המאגר" מעוגן', 'pass', 'המנוע המקומי שולף תשובות אך ורק מערכים קיימים במאגר ומצרף מקור לכל תשובה — בנוי כך שאינו מסוגל להמציא נתון.');
   return checks;
 }
+/* מנגנון הצלבה: מצליב בין קבצי הנתונים ומתריע על סתירות ועל ערבוב תקופות */
+function crossCheck(){
+  const out=[]; const add=(id,label,status,detail)=>out.push({id,label,status,detail});
+  const P=DATA.parties, poll=latestPoll();
+  if(poll){
+    const orphans=poll.figures.filter(f=>!f.partyId||!P.find(p=>p.id===f.partyId)).map(f=>f.party||'(ללא שם)');
+    add('poll-join','חיבור הסקר למפלגות לפי מזהה יציב', orphans.length?'fail':'pass',
+      orphans.length?`שורות סקר ללא התאמה למפלגה במאגר: ${orphans.join(', ')}.`:`כל ${poll.figures.length} שורות הסקר האחרון מחוברות למפלגה במאגר לפי מזהה (partyId), לא לפי שם חופשי.`);
+    const nameMis=poll.figures.map(f=>{const p=P.find(z=>z.id===f.partyId);return (p&&f.party&&f.party!==p.name)?`"${f.party}"↔"${p.name}"`:null;}).filter(Boolean);
+    add('name-consistency','עקביות שמות תצוגה בין סקרים למאגר', nameMis.length?'warn':'pass',
+      nameMis.length?`הבדלי כתיב בין הסקר למאגר (החיבור תקין לפי מזהה): ${nameMis.join(', ')}.`:'שמות התצוגה בסקרים זהים לשמות במאגר המפלגות.');
+  }
+  const dangling=P.filter(p=>p.mergedInto&&!P.find(x=>x.id===p.mergedInto)).map(p=>p.name);
+  add('merge-refs','הפניות מיזוג מצביעות לרשימה קיימת', dangling.length?'fail':'pass',
+    dangling.length?`מיזוג ליעד שאינו קיים במאגר: ${dangling.join(', ')}.`:'כל סימוני המיזוג בין המפלגות מצביעים לרשימה קיימת.');
+  const histOnly=P.filter(p=>p.seats>0&&p.runs2026===false).map(p=>`${p.name} (${p.seats} מנדטים, התמזגה ל${mergeTargetName(p)||'רשימה אחרת'})`);
+  add('epoch-standalone','זיהוי מנדטים היסטוריים בלבד', histOnly.length?'warn':'pass',
+    histOnly.length?`מפלגות עם מנדטי כנסת ה‑25 שאינן רצות עצמאית ב‑2026 — התשובות מסמנות זאת אוטומטית: ${histOnly.join('; ')}.`:'אין מפלגה שמנדטיה היסטוריים בלבד.');
+  const sum=P.reduce((a,p)=>a+(p.seats||0),0);
+  add('seat-base','בסיס המנדטים (כנסת ה‑25) שקוף ומוסבר', sum===120?'pass':'warn',
+    sum===120?'סכום מנדטי הבסיס = 120.':`סכום מנדטי הבסיס לפי הרשימות הנוכחיות = ${sum} מתוך 120. ההפרש (${120-sum}) שייך לרשימות שהתמזגו/התפצלו — למשל מנדטי 'העבודה' המיוצגים כעת ב'הדמוקרטים' (איחוד העבודה ומרצ), המסומנת 0 כרשימה חדשה.`);
+  if(poll){
+    const big=poll.figures.map(f=>{const p=P.find(z=>z.id===f.partyId);if(!p||!(p.seats>0))return null;return Math.abs(f.seats-p.seats)>=8?`${p.name}: ${p.seats}→${f.seats}`:null;}).filter(Boolean);
+    add('poll-divergence','פערים גדולים בין הבסיס לסקר מסומנים', big.length?'warn':'pass',
+      big.length?`פער ניכר שמחייב הצגת שתי המידות (המנוע אכן מציג את שתיהן): ${big.join('; ')}.`:'אין פער חריג בין מנדטי הבסיס לסקר האחרון.');
+    add('poll-recency','הסקר האחרון מתוארך', isNaN(new Date(poll.date))?'warn':'pass',
+      `הסקר האחרון: ${heDate(poll.date)} (${poll.pollster}); עדכון המאגר: ${heDate(DATA.meta.lastUpdated)}.`);
+  }
+  return out;
+}
 function viewTrust(){
-  const I=DATA.integrity, audit=runAudit();
+  const I=DATA.integrity, audit=runAudit(), xc=crossCheck();
   const neu=audit.find(c=>c.id==='neutrality'); const flagged=(neu&&neu.flagged)||[];
-  const pass=audit.filter(a=>a.status==='pass').length, warn=audit.filter(a=>a.status==='warn').length, fail=audit.filter(a=>a.status==='fail').length;
+  const all=audit.concat(xc);
+  const pass=all.filter(a=>a.status==='pass').length, warn=all.filter(a=>a.status==='warn').length, fail=all.filter(a=>a.status==='fail').length;
   const overall=fail>0?'fail':(warn>0?'warn':'pass');
   const overallTxt=fail>0?'נמצאו תקלות שדורשות תיקון':(warn>0?'תקין · עם פריטים לבדיקה אנושית':'כל הבדיקות עברו');
   const datasets=[
@@ -1179,6 +1210,15 @@ function viewTrust(){
         <div class="ai-top">${statusBadge(c.status)}<span class="ai-label">${esc(c.label)}</span></div>
         <div class="ai-detail">${esc(c.detail)}</div>
         ${c.flagged&&c.flagged.length?`<div class="ai-flags">${c.flagged.map(f=>`<span class="flag">"${esc(f.term)}" · ${esc(f.where)}</span>`).join('')}</div>`:''}
+      </div>`).join('')}
+    </div>
+
+    <h2 class="trust-h">הצלבה בין מאגרים · גילוי סתירות וערבוב תקופות</h2>
+    <p class="trust-sub">מנגנון נפרד שמצליב בין קבצי הנתונים (מפלגות · סקרים · תקציב · מטא): מאמת שאותו פריט עקבי בכל מקום שבו הוא מופיע, ומתריע כשנתון מתקופה אחת (מנדטי 2022) עלול להיות מוצג לצד נתון מתקופה אחרת (סקר 2026). בזכותו, תשובות "מי גדול יותר" תמיד מציינות לפי איזו מידה ומאיזה תאריך.</p>
+    <div class="audit-list">
+      ${xc.map(c=>`<div class="audit-item ${c.status}">
+        <div class="ai-top">${statusBadge(c.status)}<span class="ai-label">${esc(c.label)}</span></div>
+        <div class="ai-detail">${esc(c.detail)}</div>
       </div>`).join('')}
     </div>
 
@@ -1265,12 +1305,24 @@ function ansBudget(ent,qn,qset){
   if(sub) return {found:false,title:'אין פירוט במאגר',answer:`במאגר אין נתון ספציפי ל"${sub}". מה שיש: תקציב ${c.name} בכללותו, כ‑${c.start}% מהתקציב הכולל (כ‑${nis} מיליארד ₪).`,sourceLabel:`תקציב המדינה ← ${c.name}`,route:'#/budget',raw:c.cut};
   return {found:true,title:'תקציב',answer:`תקציב ${c.name} הוא כ‑${c.start}% מהתקציב הכולל, כ‑${nis} מיליארד ₪ (מבוסס על תקציב 2025).`,sourceLabel:`תקציב המדינה ← ${c.name}`,route:'#/budget',raw:c.cut};
 }
-function ansSeats(ent){const p=DATA.parties.find(x=>x.id===ent.party);if(p.seats>0)return {found:true,title:'מנדטים',answer:`ל${p.name} יש ${p.seats} מנדטים (תוצאות הכנסת ה‑25).`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.essence};return {found:true,title:'מנדטים',answer:`${p.name} היא רשימה חדשה לקראת 2026; אין לה מנדטים בכנסת ה‑25.`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.status2026};}
+/* ----- שכבת פיוס בין מאגרים (מנדטים) ----- */
+function latestPoll(){return (DATA.polls.polls||[]).find(p=>p.figures&&p.figures.length)||null;}
+function pollSeatsFor(id){const poll=latestPoll();if(!poll)return null;const f=poll.figures.find(x=>x.partyId===id);return f?f.seats:null;}
+function mergeTargetName(p){if(p&&p.mergedInto){const t=DATA.parties.find(x=>x.id===p.mergedInto);return t?t.name:null;}return null;}
+function mergeNote(p){const tn=mergeTargetName(p);return (p.runs2026===false&&tn)?` שים לב: לקראת 2026 ${p.name} אינה רצה עצמאית — התמזגה לרשימת ${tn}.`:'';}
+function ansSeats(ent){
+  const p=DATA.parties.find(x=>x.id===ent.party),poll=latestPoll(),pollN=pollSeatsFor(p.id);
+  const parts=[];
+  parts.push(p.seats>0?`בכנסת ה‑25 (נוב' 2022): ${p.seats} מנדטים`:`רשימה חדשה לקראת 2026 — אין לה מנדטים בכנסת ה‑25`);
+  if(pollN!=null) parts.push(`בסקר האחרון (${poll.pollster}, ${heDate(poll.date)}): ${pollN} מנדטים`);
+  return {found:true,title:`כוחה של ${p.name}`,answer:`${parts.join(' · ')}.${mergeNote(p)}`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.status2026};
+}
 function ansPosition(ent,qn){const p=DATA.parties.find(x=>x.id===ent.party),key=posKeyFor(ent.issue,qn||''),v=p.positions[key];const iss=DATA.issues.find(i=>i.explainer===ent.issue),st=DATA.statements.statements.find(s=>s.id===key);if(v==null)return {found:false,title:'לא נמצא',answer:`אין במאגר עמדה של ${p.name} בנושא הזה.`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id};return {found:true,title:'עמדת מפלגה',answer:`עמדת ${p.name} בנושא ${iss?iss.title:''}: ${stanceLabel(v)}.`,sourceLabel:`מפלגות ← ${p.name} ← עמדות`,route:'#/party/'+p.id,raw:st?st.text:''};}
-function ansPoll(){const poll=DATA.polls.polls.find(p=>p.figures&&p.figures.length);if(!poll)return {found:false,title:'אין סקר',answer:'אין במאגר סקר עם פירוט מנדטים.',sourceLabel:'חדשות וסקרים',route:'#/news'};const f=[...poll.figures].sort((a,b)=>b.seats-a.seats),lead=f[0];return {found:true,title:'הסקר האחרון',answer:`בסקר האחרון במאגר (${poll.pollster}, ${poll.date}): ${f.map(x=>x.party+' '+x.seats).join(' · ')}. המוביל: ${lead.party} עם ${lead.seats} מנדטים.`,sourceLabel:`סקר ${poll.pollster}`,route:'#/news',externalUrl:poll.sourceUrl,raw:poll.summary};}
+function pollName(x){const p=x.partyId&&DATA.parties.find(z=>z.id===x.partyId);return p?p.name:x.party;}
+function ansPoll(){const poll=latestPoll();if(!poll)return {found:false,title:'אין סקר',answer:'אין במאגר סקר עם פירוט מנדטים.',sourceLabel:'חדשות וסקרים',route:'#/news'};const f=[...poll.figures].sort((a,b)=>b.seats-a.seats),lead=f[0];return {found:true,title:'הסקר האחרון',answer:`בסקר האחרון במאגר (${poll.pollster}, ${heDate(poll.date)}): ${f.map(x=>pollName(x)+' '+x.seats).join(' · ')}. המוביל: ${pollName(lead)} עם ${lead.seats} מנדטים. (זהו נתון סקר, לא תוצאת בחירות.)`,sourceLabel:`סקר ${poll.pollster}`,route:'#/news',externalUrl:poll.sourceUrl,raw:poll.summary};}
 function ansExplainer(ent){const e=DATA.explainers[ent.issue];if(!e)return {found:false,title:'לא נמצא',answer:'אין במאגר הסבר לנושא הזה.',sourceLabel:'הנושאים',route:'#/issues'};return {found:true,title:'הסבר ניטרלי',answer:e.fact,sourceLabel:e.source?e.source.name:('נושא: '+e.title),route:'#/issue/'+ent.issue,externalUrl:e.source&&e.source.url,raw:e.dispute};}
 function ansLeader(ent){const p=DATA.parties.find(x=>x.id===ent.party);return {found:true,title:'מנהיג',answer:`${p.name} בראשות ${p.leader}.`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.essence};}
-function ansPartyInfo(ent){const p=DATA.parties.find(x=>x.id===ent.party),seats=p.seats>0?`${p.seats} מנדטים`:'רשימה חדשה 2026';return {found:true,title:p.name,answer:`${p.name} (גוש ${p.bloc}, ${seats}), בראשות ${p.leader}. ${p.essence}`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.status2026};}
+function ansPartyInfo(ent){const p=DATA.parties.find(x=>x.id===ent.party),seats=p.seats>0?`${p.seats} מנדטים בכנסת ה‑25`:'רשימה חדשה 2026';return {found:true,title:p.name,answer:`${p.name} (גוש ${p.bloc}, ${seats}), בראשות ${p.leader}. ${p.essence}${mergeNote(p)}`,sourceLabel:`מפלגות ← ${p.name}`,route:'#/party/'+p.id,raw:p.status2026};}
 function ansNeedParty(ent){const iss=DATA.issues.find(i=>i.explainer===ent.issue),t=iss?iss.title:'הנושא';return {found:false,title:'על איזו מפלגה?',answer:`על איזו מפלגה תרצה לדעת ביחס ל${t}? למשל: "עמדת הליכוד על ${t}".`,suggestions:['עמדת הליכוד על '+t,'עמדת יש עתיד על '+t,'עמדת הדמוקרטים על '+t]};}
 function ansNeedIssue(ent){const p=DATA.parties.find(x=>x.id===ent.party),nm=p?p.name:'המפלגה';return {found:false,title:'על איזה נושא?',answer:`על איזה נושא תרצה את עמדת ${nm}? למשל: גיוס חרדים, מערכת המשפט, המלחמה, דת ומדינה, השטחים.`,suggestions:['עמדת '+nm+' על גיוס חרדים','עמדת '+nm+' על מערכת המשפט','עמדת '+nm+' על המלחמה']};}
 
@@ -1278,10 +1330,19 @@ function compareParties(ids,issue,qn){
   const ps=ids.slice(0,3).map(id=>DATA.parties.find(p=>p.id===id)).filter(Boolean);
   if(ps.length<2) return ps.length?ansPartyInfo({party:ps[0].id}):{found:false,title:'לא נמצא',answer:'לא זוהו שתי מפלגות להשוואה.',suggestions:QA_SUGGEST};
   if(issue){const key=posKeyFor(issue,qn),iss=DATA.issues.find(i=>i.explainer===issue);return {found:true,title:'השוואת עמדות',answer:`בנושא ${iss?iss.title:''} — ${ps.map(p=>p.name+': '+stanceLabel(p.positions[key])).join(' · ')}.`,sourceLabel:'מפלגות ← עמדות',route:'#/parties'};}
-  const rows=ps.map(p=>p.seats>0?`${p.name} ${p.seats} מנדטים`:`${p.name} (רשימה חדשה, 0)`);
+  // השוואת גודל — פיוס בין שתי תקופות: מובילים עם הסקר העדכני אם קיים לכולן, אחרת בסיס הכנסת ה‑25 עם התרעות
+  const poll=latestPoll();
+  if(poll&&ps.every(p=>pollSeatsFor(p.id)!=null)){
+    const withN=ps.map(p=>({p,n:pollSeatsFor(p.id)})),sorted=[...withN].sort((a,b)=>b.n-a.n),diff=sorted[0].n-sorted[1].n;
+    const tail=diff>0?` ${sorted[0].p.name} מובילה ב‑${diff} מנדטים.`:' צמודות.';
+    return {found:true,title:'השוואה — הסקר האחרון',answer:`בסקר האחרון (${poll.pollster}, ${heDate(poll.date)}): ${withN.map(x=>x.p.name+' '+x.n).join(' · ')}.${tail}`,sourceLabel:`סקר ${poll.pollster}`,route:'#/news',externalUrl:poll.sourceUrl};
+  }
+  const rows=ps.map(p=>{const pn=pollSeatsFor(p.id),base=p.seats>0?`${p.seats}`:'0 (חדשה/ממוזגת)';return `${p.name}: ${base}${pn!=null?` (בסקר ${pn})`:''}`;});
   const sorted=[...ps].sort((a,b)=>(b.seats||0)-(a.seats||0)),diff=(sorted[0].seats||0)-(sorted[1].seats||0);
-  const tail=diff>0?` ${sorted[0].name} גדולה יותר ב‑${diff} מנדטים.`:' שוות בגודלן.';
-  return {found:true,title:'השוואת מנדטים',answer:`${rows.join(' · ')}.${tail}`,sourceLabel:'מפלגות ← מנדטים',route:'#/parties'};
+  const tail=diff>0?` לפי בסיס הכנסת ה‑25, ${sorted[0].name} גדולה ב‑${diff} מנדטים.`:' שוות בבסיס הכנסת ה‑25.';
+  const merged=ps.filter(p=>p.runs2026===false&&mergeTargetName(p)).map(p=>`${p.name} התמזגה לרשימת ${mergeTargetName(p)}`);
+  const note=merged.length?` שים לב: ${merged.join('; ')} — לכן מספר הכנסת ה‑25 אינו משקף את מצב 2026.`:'';
+  return {found:true,title:'השוואת מנדטים (בסיס הכנסת ה‑25)',answer:`${rows.join(' · ')}.${tail}${note}`,sourceLabel:'מפלגות ← מנדטים',route:'#/parties'};
 }
 function compareBudgets(ids){
   const B=DATA.budget,cs=ids.slice(0,3).map(id=>B.categories.find(c=>c.id===id)).filter(Boolean);
