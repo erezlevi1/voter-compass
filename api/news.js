@@ -2,7 +2,7 @@
 // ישירות מהפידים של אתרי החדשות הישראליים — בצד השרת, בלי CORS ובלי פרוקסי.
 // כל פריט מוחזר עם קישור ישיר אמיתי לכתבה + שם המקור והדומיין, כך שאפשר לאמת.
 const FEEDS = [
-  { url: 'https://www.maariv.co.il/Rss/RssFeedsPolitiMedini', src: 'מעריב', site: 'maariv.co.il', all: true },
+  { url: 'https://www.maariv.co.il/rss/rssfeedspolitimedini', src: 'מעריב', site: 'maariv.co.il', all: true },
   { url: 'https://www.ynet.co.il/Integration/StoryRss2.xml',  src: 'ynet',  site: 'ynet.co.il' },
   { url: 'https://rss.walla.co.il/feed/1?type=main',          src: 'וואלה', site: 'walla.co.il' },
   { url: 'https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2', src: 'גלובס', site: 'globes.co.il' }
@@ -63,7 +63,10 @@ module.exports = async (req, res) => {
     const seen = new Set();
     items = items.filter(it => { if (seen.has(it.link)) return false; seen.add(it.link); return true; });
     items.sort((a, b) => (b.dt ? Date.parse(b.dt) : 0) - (a.dt ? Date.parse(a.dt) : 0));
-    items = items.slice(0, 18);
+    // איזון בין מקורות: עד 6 כתבות לכל מקור, תוך שמירה על סדר העדכניות
+    const per = {}, balanced = [];
+    for (const it of items) { per[it.src] = (per[it.src] || 0) + 1; if (per[it.src] <= 6) balanced.push(it); }
+    items = balanced.slice(0, 18);
     res.status(200).json({ items, live: items.length > 0, sources: FEEDS.map(f => f.site), at: Date.now() });
   } catch (e) {
     res.status(200).json({ items: [], live: false, at: Date.now() });
