@@ -926,8 +926,10 @@ function viewNews(){
       <a class="src-link" href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener noreferrer">לסקר המלא ${chev()}</a>
     </div>`).join('');
   const html=`<div class="ticker" id="ticker" aria-label="פס מבזקי חדשות"></div><div class="page"><div class="wrap">
-    <div class="page-head" style="margin-bottom:24px"><span class="kicker">בזמן אמת</span><h1>חדשות וסקרים</h1>
-    <p>כותרות פוליטיות עדכניות, נמשכות בזמן אמת ממקורות החדשות בעברית, לצד הסקרים האחרונים שפורסמו. מתרענן אוטומטית.</p></div>
+    <div class="page-head" style="margin-bottom:18px"><span class="kicker">בזמן אמת</span><h1>חדשות וסקרים</h1>
+    <p>כותרות פוליטיות עדכניות, נמשכות אוטומטית מערוצי ה‑RSS של גופי התקשורת, לצד הסקרים האחרונים שפורסמו. מתרענן אוטומטית.</p></div>
+
+    <div class="status-note news-disclaimer" style="margin:0 0 22px">${svgIcon('flag')}<div>הכותרות בעמוד זה נמשכות אוטומטית מערוצי ה‑RSS הפומביים של גופי התקשורת, ומוצגות ככותרת בלבד בליווי שם המקור וקישור ישיר לכתבה המקורית. זכויות היוצרים בכותרות ובכתבות שמורות למפרסמים. "מצפן הבוחר" אינו מחבר, עורך, מאמת או מאמץ את תוכן הכותרות, ואינו אחראי לנכונותן או לדעות המובעות בהן. בעל זכויות המבקש הסרת פריט מוזמן ${RIGHTS_CONTACT?`לפנות אל <a href="mailto:${esc(RIGHTS_CONTACT)}">${esc(RIGHTS_CONTACT)}</a>`:'לפנות אלינו (פרטי קשר יתעדכנו בקרוב)'}.</div></div>
 
     <div class="news-head"><div class="news-status" id="news-status"><span class="spin"></span> טוען כותרות…</div>
       <button class="btn btn-ghost btn-sm" id="news-refresh">${refreshIcon()} רענן</button></div>
@@ -949,6 +951,8 @@ function viewNews(){
 const NEWS_QUERY='בחירות OR כנסת OR ממשלה OR קואליציה OR נתניהו OR סקר OR מנדטים';
 const RSS='https://news.google.com/rss/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he&gl=IL&ceid=IL:he';
 const NEWS_SEARCH='https://news.google.com/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he-IL&gl=IL&ceid=IL:he';
+// כתובת ליצירת קשר להודעה-והסרה (notice-and-takedown). למלא אימייל בהמשך; כשריק מוצג "צרו קשר" ללא קישור.
+const RIGHTS_CONTACT='';
 const PROXIES=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)];
 const SEED=[
   {t:'הכנסת מקדמת הצעת חוק לפיזורה; ייתכן שהבחירות יוקדמו לספטמבר',src:'מבזק'},
@@ -963,11 +967,11 @@ function hostOf(link){try{return new URL(link).hostname.replace(/^www\./,'');}ca
 function newsCard(it){
   const host=it.site||(it.searchLink?'':hostOf(it.link));
   const when = it.dt ? `<span class="when">${clockMini()} ${esc(fmtFull(it.dt))}</span><span class="rel">${esc(relTime(it.dt))}</span>` : '';
-  const srcLabel=it.searchLink?'כותרת לדוגמה':('מתוך '+esc(it.src||host||'חדשות'));
+  const srcLabel=it.searchLink?'כותרת לדוגמה':('כותרת מאת '+esc(it.src||host||'מקור חיצוני'));
   const hostTag=host?`<span class="src-host">${esc(host)}</span>`:'';
   const meta=`<span class="src">${srcLabel}</span>${hostTag}${when}`;
   const cta=it.searchLink?`לכותרות החיות ב‑Google News ${chev()}`
-    :(it.link?`לכתבה המקורית${it.src?' ב'+esc(it.src):''}${it.via?' · דרך '+esc(it.via):''} ${chev()}`:`כותרת לדוגמה`);
+    :(it.link?`לכתבה המלאה באתר ${esc(it.src||'המקור')}${it.via?' · דרך '+esc(it.via):''} ${chev()}`:`כותרת לדוגמה`);
   const inner=`<div class="meta">${meta}</div><h3>${esc(it.t)}</h3><span class="go">${cta}</span>`;
   return it.link?`<a class="news-card" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<article class="news-card">${inner}</article>`;
 }
