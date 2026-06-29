@@ -765,7 +765,7 @@ function viewParty(m){
       </div>
       <div class="panel">
         <h3>עמדות לפי נושא</h3>
-        <div class="sub">${esc(p.essence)}</div>
+        <div class="sub">${esc(p.essence)} <em style="color:var(--ink-3)">· סיכום עמדות ממקורות פומביים, לא ציטוט רשמי של המפלגה.</em></div>
         ${stances}
       </div>
     </div>
@@ -1484,7 +1484,7 @@ async function boot(){
     }));
     entries.forEach(([k,v])=>DATA[k]=v);
     document.getElementById('foot-updated').textContent='עודכן: '+heDate(DATA.meta.lastUpdated);
-    document.getElementById('foot-disclaimer').innerHTML='<strong>שקיפות:</strong> '+esc(DATA.meta.disclaimers[2])+' '+esc(DATA.meta.disclaimers[3]);
+    document.getElementById('foot-disclaimer').innerHTML='<strong>הבהרה משפטית:</strong> '+((DATA.meta.legal&&DATA.meta.legal.length)?DATA.meta.legal.map(esc).join(' '):esc(DATA.meta.disclaimers[3]));
     document.getElementById('loading').style.display='none';
     router();
   }catch(e){
