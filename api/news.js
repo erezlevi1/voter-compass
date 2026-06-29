@@ -1,10 +1,13 @@
 // api/news.js — פונקציית שרת (Vercel) שמושכת כותרות פוליטיות עדכניות
 // ישירות מהפידים של אתרי החדשות הישראליים — בצד השרת, בלי CORS ובלי פרוקסי.
 // כל פריט מוחזר עם קישור ישיר אמיתי לכתבה + שם המקור והדומיין, כך שאפשר לאמת.
+// פידים שאומתו כנגישים מצד שרת (Vercel) ומחזירים קישורים ישירים אמיתיים.
+// מעריב (פוליטי-מדיני) הוסר: חוסם כתובות IP של מרכזי נתונים אף שהוא נגיש מדפדפן.
 const FEEDS = [
-  { url: 'https://www.maariv.co.il/rss/rssfeedspolitimedini', src: 'מעריב', site: 'maariv.co.il', all: true },
   { url: 'https://www.ynet.co.il/Integration/StoryRss2.xml',  src: 'ynet',  site: 'ynet.co.il' },
   { url: 'https://rss.walla.co.il/feed/1?type=main',          src: 'וואלה', site: 'walla.co.il' },
+  { url: 'https://www.zman.co.il/feed/',                      src: 'זמן ישראל', site: 'zman.co.il' },
+  { url: 'https://www.davar1.co.il/feed/',                    src: 'דבר',   site: 'davar1.co.il' },
   { url: 'https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2', src: 'גלובס', site: 'globes.co.il' }
 ];
 // סינון לרלוונטיות פוליטית עבור פידים כלליים (פיד "פוליטי-מדיני" של מעריב פטור — all:true)
