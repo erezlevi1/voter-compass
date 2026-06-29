@@ -212,6 +212,7 @@ main{flex:1}
 .news-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
 .news-card .meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;font-size:.78rem;color:var(--ink-3);font-weight:500}
 .news-card .src{color:var(--accent);font-weight:600}
+.news-card .src-host{font-size:.72rem;color:var(--ink-3);font-weight:500;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;background:var(--surface-2,rgba(0,0,0,.04));border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .news-card .when{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
 .news-card .rel{opacity:.7}
 .news-card .rel::before{content:"·";margin-inline-end:7px}
@@ -947,6 +948,7 @@ function viewNews(){
 }
 const NEWS_QUERY='בחירות OR כנסת OR ממשלה OR קואליציה OR נתניהו OR סקר OR מנדטים';
 const RSS='https://news.google.com/rss/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he&gl=IL&ceid=IL:he';
+const NEWS_SEARCH='https://news.google.com/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he-IL&gl=IL&ceid=IL:he';
 const PROXIES=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?url='+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u)];
 const SEED=[
   {t:'הכנסת מקדמת הצעת חוק לפיזורה; ייתכן שהבחירות יוקדמו לספטמבר',src:'מבזק'},
@@ -957,15 +959,33 @@ const SEED=[
   {t:'יוקר המחיה והיום שאחרי המלחמה: הנושאים שיכריעו את הבחירות',src:'כלכלה'}
 ];
 function relTime(d){if(!d)return'';const s=(Date.now()-d.getTime())/1000;if(s<3600)return'לפני '+Math.max(1,Math.round(s/60))+' דק׳';if(s<86400)return'לפני '+Math.round(s/3600)+' שע׳';return'לפני '+Math.round(s/86400)+' ימים'}
+function hostOf(link){try{return new URL(link).hostname.replace(/^www\./,'');}catch(e){return '';}}
 function newsCard(it){
+  const host=it.site||(it.searchLink?'':hostOf(it.link));
   const when = it.dt ? `<span class="when">${clockMini()} ${esc(fmtFull(it.dt))}</span><span class="rel">${esc(relTime(it.dt))}</span>` : '';
-  const meta=`<span class="src">${esc(it.src||'חדשות')}</span>${when}`;
-  const inner=`<div class="meta">${meta}</div><h3>${esc(it.t)}</h3><span class="go">קרא בכתבה ${chev()}</span>`;
+  const srcLabel=it.searchLink?'כותרת לדוגמה':('מתוך '+esc(it.src||host||'חדשות'));
+  const hostTag=host?`<span class="src-host">${esc(host)}</span>`:'';
+  const meta=`<span class="src">${srcLabel}</span>${hostTag}${when}`;
+  const cta=it.searchLink?`לכותרות החיות ב‑Google News ${chev()}`
+    :(it.link?`לכתבה המקורית${it.src?' ב'+esc(it.src):''}${it.via?' · דרך '+esc(it.via):''} ${chev()}`:`כותרת לדוגמה`);
+  const inner=`<div class="meta">${meta}</div><h3>${esc(it.t)}</h3><span class="go">${cta}</span>`;
   return it.link?`<a class="news-card" href="${esc(it.link)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<article class="news-card">${inner}</article>`;
 }
 let newsCache=null;
 async function getNews(force){
   if(newsCache&&!force) return newsCache;
+  // 1. מקור מועדף: פונקציית השרת (/api/news) — קישורים ישירים אמיתיים לכתבות + מקור מאומת. עובד כשהאתר מוגש מ-Vercel.
+  try{
+    const res=await fetch('/api/news',{cache:'no-store',signal:AbortSignal.timeout(8000)});
+    if(res.ok){
+      const j=await res.json();
+      if(j&&j.items&&j.items.length){
+        const items=j.items.map(it=>({t:it.t,src:it.src,site:it.site,link:it.link,dt:it.dt?new Date(it.dt):null}));
+        newsCache={items,live:true,direct:true,at:Date.now()}; return newsCache;
+      }
+    }
+  }catch(e){}
+  // 2. נפילה: Google News RSS דרך פרוקסי CORS (כשאין שרת — קישור עובר דרך Google News אל הכתבה המקורית).
   for(const make of PROXIES){
     try{
       const res=await fetch(make(RSS),{cache:'no-store',signal:AbortSignal.timeout(7000)}); if(!res.ok)continue;
@@ -975,20 +995,21 @@ async function getNews(force){
         let src=(it.querySelector('source')?.textContent||'').trim();
         const mm=title.match(/^(.*) - ([^-]+)$/); if(mm){title=mm[1].trim(); if(!src)src=mm[2].trim();}
         const pd=it.querySelector('pubDate')?.textContent;
-        return {t:title,src:src||'חדשות',link:it.querySelector('link')?.textContent||'',dt:pd?new Date(pd):null};
+        return {t:title,src:src||'חדשות',via:'Google News',link:it.querySelector('link')?.textContent||'',dt:pd?new Date(pd):null};
       }).filter(x=>x.t);
-      if(items.length){ newsCache={items,live:true,at:Date.now()}; return newsCache; }
+      if(items.length){ newsCache={items,live:true,direct:false,at:Date.now()}; return newsCache; }
     }catch(e){}
   }
-  newsCache={items:SEED.map(s=>({t:s.t,src:s.src,link:'',dt:null})),live:false,at:Date.now()};
+  // 3. נפילה אחרונה: כותרות לדוגמה — מקושרות לחיפוש החי ב-Google News כדי שתמיד יש יעד אמיתי.
+  newsCache={items:SEED.map(s=>({t:s.t,src:s.src,link:NEWS_SEARCH,searchLink:true,dt:null})),live:false,at:Date.now()};
   return newsCache;
 }
 function renderNews(d){
   const grid=document.getElementById('news-grid'), status=document.getElementById('news-status'); if(!grid)return;
   grid.innerHTML=d.items.slice(0,9).map(newsCard).join('');
   status.innerHTML = d.live
-    ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block"></span> חי · עודכן ${new Date(d.at).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`
-    : `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--gold)" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg> כותרות לדוגמה · לא נטען חיבור חי`;
+    ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block"></span> חי${d.direct?' · קישורים ישירים למקור':' · דרך Google News'} · עודכן ${new Date(d.at).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}`
+    : `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--gold)" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg> כותרות לדוגמה · לחצו לכותרות החיות`;
 }
 function tickerSet(items){
   const sep='<span class="ticker-sep" aria-hidden="true">◆</span>';
