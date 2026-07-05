@@ -33,8 +33,9 @@ function stripRefs(s) { return s.replace(/<ref[^>]*\/>/g, '').replace(/<ref[\s\S
 function plainText(s) {
   return stripRefs(s)
     .replace(/\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/g, '$1')
-    .replace(/'''/g, '')
+    .replace(/'{2,}/g, '')
     .replace(/\{\{[^{}]*\}\}/g, '')
+    .replace(/^[\s|]+|[\s|]+$/g, '')
     .trim();
 }
 function rowCells(row) {
