@@ -1446,13 +1446,13 @@ function findAllOrdered(qn,map,multi){
   hits.sort((a,b)=>a.idx-b.idx);
   const out=[],seen=new Set(); hits.forEach(h=>{if(!seen.has(h.id)){seen.add(h.id);out.push(h.id);}}); return out;
 }
-const POS_KEY={draft:'draft',judicial:'judicial',war:'gaza',territories:'sovereign',religionstate:'religion',economy:'economy',arab:'arab',democracy:'democracy'};
+const POS_KEY={draft:'draft',judicial:'judicial',war:'gaza',territories:'sovereign',religionstate:'religion',economy:'economy',arab:'arab',democracy:'democracy',inquiry:'inquiry'};
 function posKeyFor(issue,qn){
   if(issue==='territories') return /שתי מדינות|מדינה פלסטינית|פלסטינית|פלסטינים/.test(qn)?'twostate':'sovereign';
   if(issue==='war') return /חטופים|חטוף|עסקת חטופים/.test(qn)?'hostages':'gaza';
   return POS_KEY[issue];
 }
-const QA_SUGGEST=['כמה מוציאים על ביטחון?','כמה מנדטים יש לליכוד?','מי מוביל בסקרים?','מה זה הרפורמה המשפטית?','עמדת יש עתיד על גיוס חרדים','מי גדולה יותר, הליכוד או יש עתיד?','כמה מוציאים על חיל האוויר?'];
+const QA_SUGGEST=['כמה מוציאים על ביטחון?','כמה מנדטים יש לליכוד?','מי מוביל בסקרים?','מה זה ועדת חקירה ממלכתית?','עמדת הליכוד על ועדת חקירה','מי גדולה יותר, הליכוד או ביחד?','כמה מוציאים על חיל האוויר?'];
 function qaAnswer(q){
   qaInit();
   const qn=heNorm(q); if(!qn)return null;

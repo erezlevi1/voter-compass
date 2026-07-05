@@ -1,20 +1,21 @@
 {
   "scale": {"label":{"2":"מסכים מאוד","1":"מסכים","0":"ניטרלי / תלוי","-1":"מתנגד","-2":"מתנגד מאוד"}},
   "axes": {
-    "bloc": {"label":"גוש פוליטי","posLabel":"ימין","negLabel":"מרכז־שמאל","weights":{"judicial":1,"sovereign":1,"gaza":0.6,"twostate":-1,"arab":-1,"democracy":-1}},
+    "bloc": {"label":"גוש פוליטי","posLabel":"ימין","negLabel":"מרכז־שמאל","weights":{"judicial":1,"sovereign":1,"gaza":0.6,"twostate":-1,"arab":-1,"democracy":-1,"inquiry":-0.8}},
     "relig": {"label":"דת ומדינה","posLabel":"דתי","negLabel":"חילוני","weights":{"draft":-1,"religion":-1,"coreedu":-1,"economy":-0.6}}
   },
   "statements": [
     {"id":"draft","topic":"גיוס חרדים","explainer":"draft","text":"יש לחייב בחורי ישיבה חרדים בשירות צבאי או אזרחי, ככל אזרח."},
     {"id":"judicial","topic":"מערכת המשפט","explainer":"judicial","text":"יש לקדם רפורמה שתחזק את כוח הממשלה והכנסת מול בית המשפט העליון."},
-    {"id":"gaza","topic":"המלחמה בעזה","explainer":"war","text":"יש להמשיך בלחימה בעזה עד מיגור מוחלט של חמאס, גם על חשבון עסקת חטופים."},
-    {"id":"hostages","topic":"חטופים","explainer":"war","text":"החזרת כל החטופים גוברת על המשך הלחימה, גם במחיר סיום המלחמה."},
+    {"id":"gaza","topic":"המלחמה · במבט לאחור","explainer":"war","text":"במבט לאחור: היה נכון להמשיך בלחימה עד מיגור מוחלט של חמאס, גם במחיר דחיית עסקת החטופים."},
+    {"id":"hostages","topic":"עסקת החטופים · במבט לאחור","explainer":"war","text":"במבט לאחור: השבת כל החטופים הצדיקה את סיום המלחמה ואת המחיר ששולם בהסכם אוקטובר 2025."},
     {"id":"sovereign","topic":"יהודה ושומרון","explainer":"territories","text":"יש להחיל ריבונות ישראלית על חלקים מיהודה ושומרון."},
     {"id":"twostate","topic":"הסכסוך","explainer":"territories","text":"פתרון שתי המדינות הוא הדרך הנכונה ליישוב הסכסוך."},
     {"id":"religion","topic":"דת ומדינה","explainer":"religionstate","text":"יש להרחיב תחבורה ציבורית בשבת ולאפשר נישואים אזרחיים."},
     {"id":"economy","topic":"יוקר המחיה","explainer":"economy","text":"יש לבטל תקציבים קואליציוניים ייעודיים ולהפנותם להוזלת יוקר המחיה לכלל."},
     {"id":"arab","topic":"שותפות ערבית","explainer":"arab","text":"ראוי לשלב מפלגות ערביות כשותפות מלאות בקואליציה שלטת."},
     {"id":"democracy","topic":"דמוקרטיה","explainer":"democracy","text":"השינויים שמקדמת הממשלה בשנים האחרונות מסכנים את הדמוקרטיה הישראלית."},
+    {"id":"inquiry","topic":"ועדת חקירה","explainer":"inquiry","text":"יש להקים ועדת חקירה ממלכתית לאירועי 7 באוקטובר לפי החוק הקיים — בהרכב שממנה נשיא בית המשפט העליון."},
     {"id":"coreedu","topic":"חינוך","explainer":"religionstate","text":"יש לחייב לימודי ליבה (מתמטיקה, אנגלית) בכל מוסדות החינוך כתנאי למימון ממשלתי."}
   ]
 }
