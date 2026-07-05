@@ -1,7 +1,17 @@
 {
-  "note": "מספרי הסקרים הם נתוני הכותרת שדווחו בתקשורת (לא תמיד פירוט מלא של כל 120 המנדטים). לכל סקר מצורף קישור לסקר המלא. הסקרים תנודתיים ומשתנים בין מכוני הסקרים.",
-  "livePollsFeasibility":"אין כיום API ציבורי לסקרים, וטרם נפתח עמוד סקרים בוויקיפדיה לכנסת ה‑26. הנתונים כאן מתוחזקים ידנית; סקרים חדשים מוצפים אוטומטית בעמוד 'חדשות' דרך הזנת 'סקרים'.",
+  "note": "לכל סקר מצורף קישור לפרסום המקורי. הסקרים תנודתיים ומשתנים בין מכוני הסקרים; מפלגות מתחת לאחוז החסימה אינן נספרות במנדטים.",
+  "livePollsFeasibility":"סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה (Opinion polling for the 2026 Israeli legislative election) דרך שער אימות אוטומטי; המאגר הידני כאן הוא הבסיס המאומת, וכל סקר חי מסומן ככזה.",
   "polls":[
+    {
+      "date":"2026-06-30","pollster":"i24NEWS (Direct Polls)","sourceUrl":"https://www.i24news.tv/he/news/opinion-and-analysis/artc-ba3647eb",
+      "summary":"זינוק לליכוד; יש\"ר של איזנקוט במקום השני; ביחד של בנט צונחת. חד\"ש-תע\"ל ובל\"ד נמדדו יחד.",
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":29},{"partyId":"yashar","party":"יש\"ר","seats":19},{"partyId":"democrats","party":"הדמוקרטים","seats":11},{"partyId":"bennett","party":"ביחד (בנט)","seats":11},{"partyId":"shas","party":"ש\"ס","seats":9},{"partyId":"beytenu","party":"ישראל ביתנו","seats":9},{"partyId":"otzma","party":"עוצמה יהודית","seats":8},{"partyId":"utj","party":"יהדות התורה","seats":8},{"partyId":"hadash","party":"חד\"ש-תע\"ל + בל\"ד","seats":7},{"partyId":"raam","party":"רע\"ם","seats":5},{"partyId":"tzionut","party":"הציונות הדתית","seats":4}]
+    },
+    {
+      "date":"2026-06-29","pollster":"חדשות 12 (מדגם)","sourceUrl":"https://www.mako.co.il/news-politics/2026_q2/Article-6987bb8ede31f91026.htm",
+      "summary":"איזנקוט ממשיך להתחזק על חשבון בנט; הליכוד עולה במנדט ונשארת הגדולה ביותר. כחול לבן (גנץ) מתחת לאחוז החסימה.",
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":24},{"partyId":"yashar","party":"יש\"ר","seats":22},{"partyId":"bennett","party":"ביחד (בנט)","seats":17},{"partyId":"democrats","party":"הדמוקרטים","seats":10},{"partyId":"shas","party":"ש\"ס","seats":9},{"partyId":"beytenu","party":"ישראל ביתנו","seats":9},{"partyId":"otzma","party":"עוצמה יהודית","seats":8},{"partyId":"utj","party":"יהדות התורה","seats":7},{"partyId":"hadash","party":"חד\"ש-תע\"ל","seats":5},{"partyId":"raam","party":"רע\"ם","seats":5},{"partyId":"tzionut","party":"הציונות הדתית","seats":4}]
+    },
     {
       "date":"2026-06-18","pollster":"חדשות 12","sourceUrl":"https://www.mako.co.il/news-israel-elections/2026/Article-675e05b95f69d91027.htm",
       "summary":"הליכוד וישר של איזנקוט מתחזקות, בנט נחלש.",

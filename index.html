@@ -213,6 +213,7 @@ main{flex:1}
 .news-card .meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 9px;font-size:.78rem;color:var(--ink-3);font-weight:500}
 .news-card .src{color:var(--accent);font-weight:600}
 .news-card .src-host{font-size:.72rem;color:var(--ink-3);font-weight:500;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;background:var(--surface-2,rgba(0,0,0,.04));border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.poll .live-tag{display:inline-block;margin-inline-start:7px;font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--good);border:1px solid currentColor;border-radius:20px;padding:1px 8px;vertical-align:middle}
 .news-card .when{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
 .news-card .rel{opacity:.7}
 .news-card .rel::before{content:"·";margin-inline-end:7px}
@@ -911,20 +912,23 @@ function drawCompass(){
 }
 
 /* ----- NEWS + POLLS ----- */
-function viewNews(){
+function pollCardsHtml(){
   const polls=DATA.polls.polls;
-  const maxSeats=Math.max(1,...polls.flatMap(p=>p.figures.map(f=>f.seats)));
-  const partyColor=name=>{const p=DATA.parties.find(x=>name.includes(x.name)||x.name.includes(name.replace(/\s*\(.+\)/,'')));return p?p.color:'var(--accent)'};
-  const pollCards=polls.map(pl=>`
+  const maxSeats=Math.max(1,...polls.flatMap(p=>(p.figures||[]).map(f=>f.seats)));
+  const colorOf=f=>{const byId=f.partyId&&DATA.parties.find(x=>x.id===f.partyId);if(byId)return byId.color;const name=f.party||'';const p=DATA.parties.find(x=>name.includes(x.name)||x.name.includes(name.replace(/\s*\(.+\)/,'')));return p?p.color:'var(--accent)'};
+  const nameOf=f=>{if(f.party)return f.party;const p=f.partyId&&DATA.parties.find(x=>x.id===f.partyId);return p?p.name:'';};
+  return polls.map(pl=>`
     <div class="poll">
-      <div class="poll-hd"><span class="pollster">${esc(pl.pollster)}</span><span class="date">${esc(pl.date)}</span></div>
-      <div class="summary">${esc(pl.summary)}</div>
-      ${pl.figures.length?pl.figures.map(f=>`
-        <div class="pbar"><span class="nm">${esc(f.party)}</span>
-          <span class="track"><i style="width:${Math.round(f.seats/maxSeats*100)}%;background:${partyColor(f.party)}"></i></span>
+      <div class="poll-hd"><span class="pollster">${esc(pl.pollster)}${pl.live?' <span class="live-tag">חי · עבר אימות</span>':''}</span><span class="date">${esc(pl.date)}</span></div>
+      ${pl.summary?`<div class="summary">${esc(pl.summary)}</div>`:''}
+      ${(pl.figures||[]).length?pl.figures.map(f=>`
+        <div class="pbar"><span class="nm">${esc(nameOf(f))}</span>
+          <span class="track"><i style="width:${Math.round(f.seats/maxSeats*100)}%;background:${colorOf(f)}"></i></span>
           <span class="val">${f.seats}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-3)">פרטי הסקר המלא בקישור.</div>'}
       <a class="src-link" href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener noreferrer">לסקר המלא ${chev()}</a>
     </div>`).join('');
+}
+function viewNews(){
   const html=`<div class="ticker" id="ticker" aria-label="פס מבזקי חדשות"></div><div class="page"><div class="wrap">
     <div class="page-head" style="margin-bottom:18px"><span class="kicker">בזמן אמת</span><h1>חדשות וסקרים</h1>
     <p>כותרות פוליטיות עדכניות, נמשכות אוטומטית מערוצי ה‑RSS של גופי התקשורת, לצד הסקרים האחרונים שפורסמו. מתרענן אוטומטית.</p></div>
@@ -937,8 +941,9 @@ function viewNews(){
 
     <h2 style="font-size:1.7rem;margin:42px 0 6px">הסקרים האחרונים</h2>
     <p style="color:var(--ink-2);max-width:64ch;margin-bottom:8px">${esc(DATA.polls.note)}</p>
-    <div class="status-note" style="margin-bottom:20px">${svgIcon('flag')}<div>${esc(DATA.polls.livePollsFeasibility)}</div></div>
-    <div class="grid-cards">${pollCards}</div>
+    <div class="status-note" style="margin-bottom:14px">${svgIcon('flag')}<div>${esc(DATA.polls.livePollsFeasibility)}</div></div>
+    <div class="status-note" id="live-polls-status" style="margin-bottom:20px">${svgIcon('flag')}<div>בודק אם פורסמו סקרים חדשים במקור החי…</div></div>
+    <div class="grid-cards" id="polls-grid">${pollCardsHtml()}</div>
 
     <div class="poll" id="wiki-live" style="margin-top:22px">
       <div class="poll-hd"><span class="pollster">מקור חי: ויקיפדיה</span><span class="date" id="wiki-updated">בודק…</span></div>
@@ -946,7 +951,18 @@ function viewNews(){
       <a class="src-link" href="https://he.wikipedia.org/wiki/הבחירות_לכנסת_העשרים_ושש" target="_blank" rel="noopener noreferrer">לעמוד החי בוויקיפדיה ${chev()}</a>
     </div>
   </div></div>`;
-  return {html, after(){ loadNews(); document.getElementById('news-refresh').addEventListener('click',()=>loadNews(true)); fetchWikiTimestamp(); }};
+  return {html, after(){
+    loadNews(); document.getElementById('news-refresh').addEventListener('click',()=>loadNews(true)); fetchWikiTimestamp();
+    loadLivePolls().then(()=>{
+      const g=document.getElementById('polls-grid'); if(g&&LIVE.merged) g.innerHTML=pollCardsHtml();
+      const s=document.getElementById('live-polls-status');
+      if(s){const r=LIVE.report;
+        if(r&&r.ok&&LIVE.merged) s.innerHTML=`${checkIcon()}<div>נמשכו ${LIVE.merged} סקרים חדשים מ"${esc(LIVE.source||'ויקיפדיה')}" — עברו את כל ${r.checks.length} בדיקות שער האימות ומסומנים בתג "חי". <a href="#/trust">לפירוט במרכז האמון ←</a></div>`;
+        else if(r&&r.ok) s.innerHTML=`${checkIcon()}<div>הצינור החי פעיל ונבדק כעת: אין סקר חדש במקור מעבר למה שכבר במאגר. <a href="#/trust">לדוח שער האימות ←</a></div>`;
+        else s.innerHTML=`${warnIcon()}<div>${esc((r&&r.checks&&r.checks[0]&&r.checks[0].detail)||'הנתונים החיים אינם זמינים כרגע; מוצג המאגר המאומת הידני.')}</div>`;
+      }
+    });
+  }};
 }
 const NEWS_QUERY='בחירות OR כנסת OR ממשלה OR קואליציה OR נתניהו OR סקר OR מנדטים';
 const RSS='https://news.google.com/rss/search?q='+encodeURIComponent(NEWS_QUERY)+'&hl=he&gl=IL&ceid=IL:he';
@@ -1147,6 +1163,28 @@ function neutralityScan(){
   Object.values(DATA.explainers).forEach(e=>{scan(e.fact,'עובדה: '+e.title);scan(e.dispute,'מחלוקת: '+e.title);});
   return hits;
 }
+/* בדיקת עיגון מכנית: שאילתות מבחן מופעלות על המנוע בזמן אמת, והתשובה מושווית לערך שנקרא ישירות מקבצי הנתונים */
+function qaGroundingTest(){
+  const cases=[
+    {q:'כמה מנדטים יש לליכוד?',expect:()=>String(DATA.parties.find(p=>p.id==='likud').seats)},
+    {q:'מי מוביל בסקרים?',expect:()=>{const pl=latestPoll();return pl?String([...pl.figures].sort((a,b)=>b.seats-a.seats)[0].seats):null;}},
+    {q:'כמה מוציאים על ביטחון?',expect:()=>{const c=DATA.budget.categories.find(x=>x.id==='defense');return String(Math.round(c.start/100*DATA.budget.totalNis));}},
+    {q:'עמדת הליכוד על גיוס חרדים',expect:()=>stanceLabel(DATA.parties.find(p=>p.id==='likud').positions.draft)}
+  ];
+  const fails=[];
+  cases.forEach(c=>{try{const exp=c.expect();const a=qaAnswer(c.q);if(!exp||!a||!a.found||a.answer.indexOf(exp)<0)fails.push(c.q);}catch(e){fails.push(c.q);}});
+  return {total:cases.length,fails};
+}
+/* בדיקת סימטריה: אורך הטיעון של כל צד בהסברים (steelman) חייב להיות דומה — מדד איזון אובייקטיבי */
+function balanceScan(){
+  const rows=[];
+  Object.entries(DATA.explainers).forEach(([k,e])=>{
+    if(!e.for||!e.against)return;
+    const a=(e.for.text||'').length,b=(e.against.text||'').length;
+    rows.push({id:k,title:e.title,ratio:Math.max(a,b)/Math.max(1,Math.min(a,b))});
+  });
+  return rows;
+}
 function runAudit(){
   const checks=[]; const add=(id,label,status,detail,flagged)=>checks.push({id,label,status,detail,flagged});
   const sts=DATA.statements.statements, polls=DATA.polls.polls, exIds=Object.keys(DATA.explainers);
@@ -1170,7 +1208,10 @@ function runAudit(){
   add('neutrality','שפה ניטרלית בטקסט העובדתי', flagged.length===0?'pass':'warn', flagged.length===0?`נסרקו ${DATA.integrity.loadedTerms.length} מונחים טעונים, ולא נמצא אף אחד בטקסט שאמור להיות ניטרלי.`:`${flagged.length} מופעים לבדיקה אנושית (הסריקה אינה כוללת את 'טיעוני הצדדים').`, flagged);
   const days=Math.max(0,Math.round((Date.now()-new Date(DATA.meta.lastUpdated))/86400000));
   add('fresh','רעננות הנתונים', days<=120?'pass':'warn', `הנתונים עודכנו לפני ${days} ימים (${heDate(DATA.meta.lastUpdated)}).`);
-  add('qa-grounded','מנוע "שאל את המאגר" מעוגן', 'pass', 'המנוע המקומי שולף תשובות אך ורק מערכים קיימים במאגר ומצרף מקור לכל תשובה — בנוי כך שאינו מסוגל להמציא נתון.');
+  const g=qaGroundingTest();
+  add('qa-grounded','מנוע "שאל את המאגר": בדיקת עיגון חיה', g.fails.length===0?'pass':'fail', g.fails.length===0?`${g.total} שאילתות מבחן הופעלו כעת על המנוע, וכל תשובה תאמה את הערך שנקרא ישירות מקבצי הנתונים — לא הצהרה, בדיקה.`:`שאילתות שהתשובה שלהן לא תאמה את המאגר: ${g.fails.join(' · ')}`);
+  const bal=balanceScan(); const worst=bal.reduce((m,r)=>r.ratio>m.ratio?r:m,{ratio:0});
+  add('steelman-balance','איזון אורך הטיעונים בין הצדדים', worst.ratio<=1.6?'pass':'warn', `בכל הסבר נמדד יחס האורך בין טיעוני שני הצדדים. היחס הגדול ביותר: ${worst.ratio?worst.ratio.toFixed(2):'-'}${worst.title?' ('+worst.title+')':''} — ${worst.ratio<=1.6?'בתחום המאוזן (עד 1.6).':'חורג מהסף; מומלץ לאזן את אורך הטיעונים.'}`);
   return checks;
 }
 /* מנגנון הצלבה: מצליב בין קבצי הנתונים ומתריע על סתירות ועל ערבוב תקופות */
@@ -1201,7 +1242,59 @@ function crossCheck(){
     add('poll-recency','הסקר האחרון מתוארך', isNaN(new Date(poll.date))?'warn':'pass',
       `הסקר האחרון: ${heDate(poll.date)} (${poll.pollster}); עדכון המאגר: ${heDate(DATA.meta.lastUpdated)}.`);
   }
+  const L=DATA.qaLexicon||{}; const badLex=[];
+  Object.keys(L.partyAliases||{}).forEach(id=>{if(!P.find(p=>p.id===id))badLex.push('מפלגה: '+id);});
+  Object.keys(L.budget||{}).forEach(id=>{if(!DATA.budget.categories.find(c=>c.id===id))badLex.push('תקציב: '+id);});
+  Object.keys(L.issues||{}).forEach(id=>{if(!DATA.explainers[id])badLex.push('נושא: '+id);});
+  Object.keys(L.subEntities||{}).forEach(id=>{if(!DATA.budget.categories.find(c=>c.id===id))badLex.push('תת-ישות: '+id);});
+  add('lexicon-refs','מילון השאלות מצביע על ישויות קיימות', badLex.length?'fail':'pass',
+    badLex.length?('מזהים במילון ללא יעד במאגר: '+badLex.join(', ')):'כל המזהים ב-qa-lexicon קיימים במאגרי המפלגות, התקציב והנושאים.');
+  const badPB=[];
+  Object.entries(DATA.budget.partyBudget||{}).forEach(([pid,prefs])=>{
+    if(!P.find(p=>p.id===pid))badPB.push('מפלגה: '+pid);
+    Object.keys(prefs).forEach(cid=>{if(!DATA.budget.categories.find(c=>c.id===cid))badPB.push(pid+'←'+cid);});
+  });
+  add('party-budget-refs','העדפות התקציב מקושרות לישויות קיימות', badPB.length?'fail':'pass',
+    badPB.length?('הפניות שבורות: '+badPB.join(', ')):'כל העדפות התקציב של המפלגות מצביעות למפלגות ולקטגוריות קיימות.');
   return out;
+}
+/* ----- נתונים חיים: ויקיפדיה ← /api/live-polls ← שער אימות בלקוח ← מיזוג מבוקר למאגר ----- */
+const LIVE={report:null,merged:0,source:null};
+function validateLivePolls(j){
+  const checks=[];const add=(id,label,ok,detail)=>checks.push({id,label,status:ok?'pass':'fail',detail});
+  const ids=new Set(DATA.parties.map(p=>p.id));
+  const ps=(j&&j.polls)||[];
+  add('fetch','המקור החי נענה',!!(j&&j.ok),(j&&j.ok)?`המקור: ${j.source||'ויקיפדיה'}${j.revid?' (גרסה '+j.revid+')':''}.`:('המקור החזיר שגיאה'+(j&&j.error?': '+j.error:'.')));
+  add('schema','מבנה הנתונים תקין',ps.length>0&&ps.every(p=>p.date&&p.pollster&&Array.isArray(p.figures)&&p.figures.length>=8),`נמשכו ${ps.length} סקרים; בכל אחד תאריך, מכון סקרים ופירוט מפלגות מלא.`);
+  add('ids','כל מפלגה ממופה למאגר',ps.every(p=>p.figures.every(f=>ids.has(f.partyId))),'כל שורת סקר ממופה למזהה מפלגה קיים במאגר (לא לפי שם חופשי).');
+  add('range','טווח מנדטים 0–45',ps.every(p=>p.figures.every(f=>Number.isInteger(f.seats)&&f.seats>=0&&f.seats<=45)),'אף ערך אינו חורג מטווח הגיוני למפלגה בודדת.');
+  add('sum','סכום מנדטים 100–120',ps.every(p=>{const s=p.figures.reduce((a,f)=>a+f.seats,0);return s>=100&&s<=120;}),'סכום המנדטים בכל סקר בין 100 ל-120 (מפלגות מתחת לאחוז החסימה אינן נספרות).');
+  add('dates','תאריכים סבירים',ps.every(p=>{const d=new Date(p.date);return d>new Date('2025-01-01')&&d<new Date(Date.now()+864e5);}),'תאריך כל סקר בין 2025 להיום.');
+  add('src','מקור לכל סקר',ps.every(p=>p.sourceUrl),'כל סקר חי מקושר לפרסום המקורי או לעמוד המקור.');
+  return {ok:checks.every(c=>c.status==='pass'),checks,at:Date.now()};
+}
+let livePromise=null;
+function loadLivePolls(){
+  if(livePromise)return livePromise;
+  livePromise=(async()=>{
+    try{
+      const r=await fetch('/api/live-polls',{cache:'no-store',signal:AbortSignal.timeout(9500)});
+      if(!r.ok)throw new Error('http '+r.status);
+      const j=await r.json();
+      LIVE.source=j.source||null;
+      LIVE.report=validateLivePolls(j);
+      if(LIVE.report.ok){
+        const newest=(DATA.polls.polls[0]&&DATA.polls.polls[0].date)||'';
+        const fresh=j.polls.filter(p=>p.date>newest);
+        fresh.slice().reverse().forEach(p=>DATA.polls.polls.unshift({...p,live:true}));
+        LIVE.merged=fresh.length;
+      }
+    }catch(e){
+      LIVE.report={ok:false,offline:true,checks:[{id:'fetch',label:'משיכת נתונים חיים',status:'warn',detail:'שירות הנתונים החיים אינו זמין כרגע (בתצוגה מקומית הוא פועל רק מהשרת). האפליקציה ממשיכה עם המאגר המאומת הידני.'}],at:Date.now()};
+    }
+    return LIVE;
+  })();
+  return livePromise;
 }
 function viewTrust(){
   const I=DATA.integrity, audit=runAudit(), xc=crossCheck();
@@ -1247,6 +1340,10 @@ function viewTrust(){
       </div>`).join('')}
     </div>
 
+    <h2 class="trust-h">שער האימות לנתונים חיים</h2>
+    <p class="trust-sub">סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה ועוברים שער אימות כפול (בשרת ושוב בדפדפן) לפני שהם נכנסים לאפליקציה: מבנה, מיפוי מפלגות למאגר, טווחי ערכים, סכום מנדטים, תאריכים ומקור. נתון שנכשל באחת הבדיקות — לא נכנס. הבדיקה שלמטה רצה עכשיו.</p>
+    <div class="audit-list" id="live-gate"><div class="ai-detail">מריץ את שער האימות…</div></div>
+
     <h2 class="trust-h">מקור וסטטוס אימות לכל נתון</h2>
     <div class="table-wrap"><table><thead><tr><th>נתון</th><th>מקור</th><th>סטטוס</th></tr></thead><tbody>
       ${datasets.map(d=>`<tr><td>${esc(d.n)}</td><td>${esc(d.src)}</td><td><span class="vstatus">${esc(d.st)}</span></td></tr>`).join('')}
@@ -1261,7 +1358,14 @@ function viewTrust(){
       <a href="#/database" class="btn btn-primary btn-sm">${svgIcon('db')} אמת בעצמך · למאגר הנתונים הפתוח</a>
     </div>
   </div></div>`;
-  return {html};
+  return {html, after(){
+    loadLivePolls().then(()=>{
+      const el=document.getElementById('live-gate'); if(!el)return;
+      const r=LIVE.report; if(!r){el.innerHTML='';return;}
+      const sum=r.ok?`<div class="ai-detail" style="margin-bottom:10px">המשיכה האחרונה עברה את כל הבדיקות${LIVE.merged?` · ${LIVE.merged} סקרים חדשים מוזגו לאפליקציה בתג "חי".`:' · לא נמצא סקר חדש מעבר למאגר הידני.'} מקור: ${esc(LIVE.source||'ויקיפדיה')}.</div>`:'';
+      el.innerHTML=sum+r.checks.map(c=>`<div class="audit-item ${c.status}"><div class="ai-top">${statusBadge(c.status)}<span class="ai-label">${esc(c.label)}</span></div><div class="ai-detail">${esc(c.detail)}</div></div>`).join('');
+    });
+  }};
 }
 
 /* ----- ASK THE DATA (מנוע שאלות מקומי, אפס קריאות חיצוניות) ----- */
