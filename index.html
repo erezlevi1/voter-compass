@@ -214,6 +214,10 @@ main{flex:1}
 .news-card .src{color:var(--accent);font-weight:600}
 .news-card .src-host{font-size:.72rem;color:var(--ink-3);font-weight:500;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;background:var(--surface-2,rgba(0,0,0,.04));border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .poll .live-tag{display:inline-block;margin-inline-start:7px;font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--good);border:1px solid currentColor;border-radius:20px;padding:1px 8px;vertical-align:middle}
+.party.merged{opacity:.82;filter:saturate(.5)}
+.party.merged:hover{opacity:1;filter:saturate(.85)}
+.status-note.merged-note{border-color:var(--gold);}
+.status-note.merged-note svg{color:var(--gold)}
 .news-card .when{display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
 .news-card .rel{opacity:.7}
 .news-card .rel::before{content:"·";margin-inline-end:7px}
@@ -700,11 +704,28 @@ function viewParties(){
       ${BLOCS.map(b=>`<button class="chip ${b.id===partyFilter?'active':''}" data-bloc="${b.id}">${b.label}</button>`).join('')}
     </div>
     <div class="grid-cards" id="parties-grid"></div>
+    ${mergedParties().length?`
+    <h2 style="font-size:1.25rem;margin:38px 0 4px;color:var(--ink-2)">רשימות שהתמזגו · לא רצות עצמאית ב‑2026</h2>
+    <p style="color:var(--ink-3);font-size:.9rem;margin-bottom:14px">נשמרות לשקיפות ולהיסטוריה; אינן נכללות בשאלון, במפה הפוליטית ובדירוגים.</p>
+    <div class="grid-cards">${mergedParties().map(p=>`
+      <a class="party merged" href="#/party/${p.id}" aria-label="פרטים על ${esc(p.name)} (התמזגה)">
+        <div class="party-top">
+          <div class="party-badge" style="background:${p.color}">${esc(p.abbr)}</div>
+          <div style="flex:1"><h3>${esc(p.name)}</h3><div class="leader">${esc(p.leader)}</div><span class="party-bloc">${esc(p.bloc)}</span></div>
+        </div>
+        <div class="party-body">
+          <div class="party-foot">
+            <div class="seats"><span class="lab">התמזגה לרשימת ${esc(mergeTargetName(p)||'אחרת')}</span></div>
+            <span class="more">לעמוד המלא ${chev()}</span>
+          </div>
+        </div>
+      </a>`).join('')}</div>`:''}
   </div></div>`;
   return {html, after(){
     const grid=document.getElementById('parties-grid');
     function render(){
-      const list=partyFilter==='all'?DATA.parties:DATA.parties.filter(p=>p.bloc===partyFilter);
+      const src=activeParties();
+      const list=partyFilter==='all'?src:src.filter(p=>p.bloc===partyFilter);
       const sorted=[...list].sort((a,b)=>b.seats-a.seats||(a.isNew?1:0)-(b.isNew?1:0));
       grid.innerHTML=sorted.map(p=>`
         <a class="party ${p.isNew?'new':''}" href="#/party/${p.id}" aria-label="פרטים על ${esc(p.name)}">
@@ -754,10 +775,8 @@ function viewParty(m){
         </div>
       </div>
     </div>
-    <div class="status-note">
-      ${svgIcon('flag')}
-      <div><strong>מצב לקראת 2026:</strong> ${esc(p.status2026)}</div>
-    </div>
+    ${p.runs2026===false?`<div class="status-note merged-note">${warnIcon()}<div><strong>רשימה זו אינה רצה בבחירות 2026 ואינה נכללת בשאלון ובדירוגים.</strong> ${esc(p.status2026)} המידע נשמר לשקיפות. ${p.mergedInto?`<a href="#/party/${esc(p.mergedInto)}">לרשימה הממשיכה: ${esc(mergeTargetName(p)||'')} ←</a>`:''}</div></div>`
+    :`<div class="status-note">${svgIcon('flag')}<div><strong>מצב לקראת 2026:</strong> ${esc(p.status2026)}</div></div>`}
     <div class="pd-cols">
       <div class="panel">
         <h3>הרשימה והמתמודדים</h3>
@@ -850,7 +869,7 @@ function renderQuizBody(){
 }
 function setProgress(frac){const el=document.getElementById('quiz-progress');if(el)el.style.transform='scaleX('+frac+')'}
 function computeMatches(){
-  return DATA.parties.map(p=>{
+  return activeParties().map(p=>{
     let score=0,max=0;
     quiz.answers.forEach((a,i)=>{ if(a.val==null)return; const w=a.important?2:1;
       const pv=p.positions[DATA.statements.statements[i].id];
@@ -870,6 +889,7 @@ function renderResults(){
     <h3 class="q-text" style="margin:8px 0 6px">הנה איפה אתה עומד</h3>
     <p style="color:var(--ink-2);margin-bottom:10px;max-width:56ch">ככל שהאחוז גבוה יותר, כך עמדותיך קרובות יותר לעמדות המפלגה. זו אינה המלצה, רק מראה. החלטת ההצבעה כולה שלך.</p>
     <p class="coverage">הציון מבוסס על <strong>${answered}</strong> מתוך ${S.length} נושאים שבהם הבעת עמדה${learning?`, ו‑<strong>${learning}</strong> נושאים שסימנת שאתה עדיין לומד (לא נספרו)`:''}.</p>
+    ${mergedParties().length?`<p class="coverage">${mergedParties().map(p=>`${esc(p.name)} אינה מדורגת: ${mergeTargetName(p)?'התמזגה לרשימת '+esc(mergeTargetName(p)):'אינה רצה ב‑2026'}`).join(' · ')}.</p>`:''}
     <div class="results-grid">
       <div id="match-list"></div>
       <div class="compass-card"><h4>המפה הפוליטית</h4><p>הנקודה השחורה זה אתה. כל אות היא מפלגה.</p>
@@ -899,7 +919,7 @@ function drawCompass(){
   const lab=(x,y,t,an)=>`<text x="${x}" y="${y}" fill="var(--ink-3)" font-size="11" font-family="Heebo" font-weight="600" text-anchor="${an}">${t}</text>`;
   html+=lab(S-pad,mid-7,ax.bloc.posLabel,'end')+lab(pad,mid-7,ax.bloc.negLabel,'start');
   html+=lab(mid,pad-12,ax.relig.negLabel,'middle')+lab(mid,S-pad+20,ax.relig.posLabel,'middle');
-  DATA.parties.forEach(p=>{
+  activeParties().forEach(p=>{
     const bx=axisScore(p.positions,ax.bloc.weights), ry=axisScore(p.positions,ax.relig.weights);
     const x=toX(bx), y=mid+ry*(mid-pad);
     html+=`<g><circle cx="${x}" cy="${y}" r="11" fill="${p.color}" opacity=".9"/><text x="${x}" y="${y+3.5}" fill="#fff" font-size="9.5" font-family="Heebo" font-weight="700" text-anchor="middle">${esc(p.abbr)}</text></g>`;
@@ -1139,7 +1159,7 @@ function initBudgetSim(){
 }
 function matchBudgetParty(vals){
   const B=DATA.budget, cats=B.categories, pb=B.partyBudget||{};
-  return DATA.parties.map(p=>{
+  return activeParties().map(p=>{
     const pref=pb[p.id]||{}; let agree=0,total=0;
     cats.forEach((c,i)=>{
       const ud=vals[i]-c.start; if(ud===0)return; total++;
@@ -1147,6 +1167,29 @@ function matchBudgetParty(vals){
     });
     return {p, pct: total>0?Math.round(((agree/total)+1)/2*100):null};
   }).filter(x=>x.pct!==null).sort((a,b)=>b.pct-a.pct);
+}
+
+/* ----- בקרת המפה הפוליטית: מי רצה, מי התמזגה, והאם הסימון תואם את הסקרים העדכניים ----- */
+function activeParties(){return DATA.parties.filter(p=>p.runs2026!==false);}
+function mergedParties(){return DATA.parties.filter(p=>p.runs2026===false);}
+function recentPollWindow(n){return (DATA.polls.polls||[]).filter(p=>p.figures&&p.figures.length).slice(0,n);}
+function rosterCheck(){
+  const out=[];const add=(id,label,status,detail)=>out.push({id,label,status,detail});
+  const win=recentPollWindow(3);
+  const seen=new Set(); win.forEach(pl=>pl.figures.forEach(f=>{if(f.partyId)seen.add(f.partyId);}));
+  const winLabel=win.length?`${win.length} הסקרים העדכניים במאגר (עד ${heDate(win[0].date)}${win[0].live?', כולל סקרים חיים':''})`:'—';
+  const missing=activeParties().filter(p=>!seen.has(p.id));
+  add('active-missing','מפלגה פעילה שנעדרת מהסקרים האחרונים', missing.length?'warn':'pass',
+    missing.length?`${missing.map(p=>p.name).join(', ')} — מסומנת כרצה, אך אינה מופיעה ב${winLabel}. ייתכן מיזוג חדש או ירידה מתחת לאחוז החסימה. אם המפה השתנתה — עדכון סימון אחד בקובץ המפלגות (runs2026/mergedInto) מסדר אוטומטית את כל האפליקציה.`:`כל המפלגות המסומנות כרצות מופיעות ב${winLabel}.`);
+  const ghosts=mergedParties().filter(p=>seen.has(p.id));
+  add('merged-present','רשימה ממוזגת שמופיעה בסקר עדכני', ghosts.length?'fail':'pass',
+    ghosts.length?`סתירה: ${ghosts.map(p=>p.name).join(', ')} מסומנת כלא-רצה אך מופיעה בסקר עדכני — יש לבדוק את הסימון.`:'אף רשימה ממוזגת אינה מופיעה בסקרים העדכניים — הסימון עקבי עם המציאות.');
+  const badT=mergedParties().filter(p=>{const t=DATA.parties.find(x=>x.id===p.mergedInto);return !t||t.runs2026===false;});
+  add('merge-target','יעדי המיזוג קיימים ופעילים', badT.length?'fail':'pass',
+    badT.length?`יעד מיזוג חסר או לא פעיל: ${badT.map(p=>p.name).join(', ')}.`:(mergedParties().length?mergedParties().map(p=>`${p.name} ← ${mergeTargetName(p)||'?'}`).join(' · ')+'.':'אין רשימות ממוזגות כרגע.'));
+  add('auto-arrange','האפליקציה מסודרת לפי המפה הנוכחית','pass',
+    `${activeParties().length} רשימות פעילות מוצגות במפלגות, בשאלון, במפה הפוליטית ובהתאמת התקציב. ${mergedParties().length?mergedParties().map(p=>p.name).join(', ')+' — הועברה למדור "רשימות שהתמזגו", והוסרה מהדירוגים ומהמפה.':''}`);
+  return out;
 }
 
 /* ----- TRUST CENTER (מנגנון אמון עצמאי) ----- */
@@ -1264,7 +1307,8 @@ function validateLivePolls(j){
   const checks=[];const add=(id,label,ok,detail)=>checks.push({id,label,status:ok?'pass':'fail',detail});
   const ids=new Set(DATA.parties.map(p=>p.id));
   const ps=(j&&j.polls)||[];
-  add('fetch','המקור החי נענה',!!(j&&j.ok),(j&&j.ok)?`המקור: ${j.source||'ויקיפדיה'}${j.revid?' (גרסה '+j.revid+')':''}.`:('המקור החזיר שגיאה'+(j&&j.error?': '+j.error:'.')));
+  const errHe={'source-format-changed':'מבנה טבלת המקור השתנה — ייתכן שינוי במפת המפלגות (עמודה נוספה או הוסרה, למשל מיזוג). הצינור נעצר בכוונה עד עדכון המיפוי, כדי לא להזרים נתונים שגויים.'};
+  add('fetch','המקור החי נענה',!!(j&&j.ok),(j&&j.ok)?`המקור: ${j.source||'ויקיפדיה'}${j.revid?' (גרסה '+j.revid+')':''}.`:(errHe[j&&j.error]||('המקור החזיר שגיאה'+(j&&j.error?': '+j.error:'.'))));
   add('schema','מבנה הנתונים תקין',ps.length>0&&ps.every(p=>p.date&&p.pollster&&Array.isArray(p.figures)&&p.figures.length>=8),`נמשכו ${ps.length} סקרים; בכל אחד תאריך, מכון סקרים ופירוט מפלגות מלא.`);
   add('ids','כל מפלגה ממופה למאגר',ps.every(p=>p.figures.every(f=>ids.has(f.partyId))),'כל שורת סקר ממופה למזהה מפלגה קיים במאגר (לא לפי שם חופשי).');
   add('range','טווח מנדטים 0–45',ps.every(p=>p.figures.every(f=>Number.isInteger(f.seats)&&f.seats>=0&&f.seats<=45)),'אף ערך אינו חורג מטווח הגיוני למפלגה בודדת.');
@@ -1340,6 +1384,10 @@ function viewTrust(){
       </div>`).join('')}
     </div>
 
+    <h2 class="trust-h">בקרת שינויים במפה הפוליטית</h2>
+    <p class="trust-sub">מיזוגים, פיצולים ורשימות חדשות קורים תוך כדי קמפיין (למשל: יש עתיד התמזגה לביחד). המנגנון משווה את סימון "מי רצה" במאגר מול הסקרים העדכניים ביותר — כולל אלה שנמשכו חיים ממש עכשיו — מתריע על אי‑התאמה, ומוודא שכל האפליקציה (מפלגות, שאלון, מפה, תקציב) מסודרת לפי המפה הנוכחית.</p>
+    <div class="audit-list" id="roster-check"><div class="ai-detail">מצליב מול הסקרים העדכניים…</div></div>
+
     <h2 class="trust-h">שער האימות לנתונים חיים</h2>
     <p class="trust-sub">סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה ועוברים שער אימות כפול (בשרת ושוב בדפדפן) לפני שהם נכנסים לאפליקציה: מבנה, מיפוי מפלגות למאגר, טווחי ערכים, סכום מנדטים, תאריכים ומקור. נתון שנכשל באחת הבדיקות — לא נכנס. הבדיקה שלמטה רצה עכשיו.</p>
     <div class="audit-list" id="live-gate"><div class="ai-detail">מריץ את שער האימות…</div></div>
@@ -1360,6 +1408,8 @@ function viewTrust(){
   </div></div>`;
   return {html, after(){
     loadLivePolls().then(()=>{
+      const rc=document.getElementById('roster-check');
+      if(rc) rc.innerHTML=rosterCheck().map(c=>`<div class="audit-item ${c.status}"><div class="ai-top">${statusBadge(c.status)}<span class="ai-label">${esc(c.label)}</span></div><div class="ai-detail">${esc(c.detail)}</div></div>`).join('');
       const el=document.getElementById('live-gate'); if(!el)return;
       const r=LIVE.report; if(!r){el.innerHTML='';return;}
       const sum=r.ok?`<div class="ai-detail" style="margin-bottom:10px">המשיכה האחרונה עברה את כל הבדיקות${LIVE.merged?` · ${LIVE.merged} סקרים חדשים מוזגו לאפליקציה בתג "חי".`:' · לא נמצא סקר חדש מעבר למאגר הידני.'} מקור: ${esc(LIVE.source||'ויקיפדיה')}.</div>`:'';
