@@ -1,6 +1,6 @@
 [
   {
-    "id":"likud","name":"הליכוד","leader":"בנימין נתניהו","bloc":"ימין","seats":32,"color":"#1B3A6B","abbr":"הל","runs2026":true,"mergedInto":null,
+    "id":"likud","name":"הליכוד","leader":"בנימין נתניהו","bloc":"ימין","seats":32,"color":"#1B3A6B","abbr":"הל","ballot":"מחל","runs2026":true,"mergedInto":null,
     "essence":"מפלגת השלטון. ימין לאומי, ליברליזם כלכלי, ומובילת המהלך לשינוי מערכת המשפט.",
     "status2026":"רצה ב‑2026 לאחר מיזוג עם 'תקווה חדשה' של גדעון סער.",
     "positions":{"draft":-1,"judicial":2,"gaza":2,"hostages":-1,"sovereign":1,"twostate":-2,"religion":-1,"economy":-1,"arab":-2,"democracy":-2,"coreedu":-1,"inquiry":-2},
@@ -14,7 +14,7 @@
     ]
   },
   {
-    "id":"yeshatid","name":"יש עתיד","leader":"יאיר לפיד","bloc":"מרכז","seats":24,"color":"#19A6C9","abbr":"יע","runs2026":false,"mergedInto":"bennett",
+    "id":"yeshatid","name":"יש עתיד","leader":"יאיר לפיד","bloc":"מרכז","seats":24,"color":"#19A6C9","abbr":"יע","ballot":"פה","runs2026":false,"mergedInto":"bennett",
     "essence":"מרכז חילוני־ליברלי. דגל בהפרדת דת ומדינה, ממלכתיות, והתנגדות לרפורמה המשפטית.",
     "status2026":"ב‑2026 רץ במסגרת רשימת 'ביחד' בראשות בנט (מיזוג עם בנט 2026, אפריל 2026).",
     "positions":{"draft":2,"judicial":-2,"gaza":-1,"hostages":1,"sovereign":-1,"twostate":1,"religion":2,"economy":2,"arab":0,"democracy":2,"coreedu":2,"inquiry":2},
@@ -27,7 +27,7 @@
     ]
   },
   {
-    "id":"mamlachti","name":"המחנה הממלכתי","leader":"בני גנץ","bloc":"מרכז","seats":12,"color":"#0E6E64","abbr":"המ","runs2026":true,"mergedInto":null,
+    "id":"mamlachti","name":"המחנה הממלכתי","leader":"בני גנץ","bloc":"מרכז","seats":12,"color":"#0E6E64","abbr":"המ","ballot":"כן","runs2026":true,"mergedInto":null,
     "essence":"מרכז ביטחוני־ממלכתי. מנסה לגשר בין ימין־מתון לשמאל סביב אחריות ואחדות.",
     "status2026":"גדי אייזנקוט פרש והקים את 'ישר!'. בסקרי יוני 2026 הרשימה (המתמודדת כ'כחול לבן') נמדדת מתחת לאחוז החסימה, ונבחנים תרחישי איחוד (הנדל, שמחי).",
     "positions":{"draft":2,"judicial":-1,"gaza":0,"hostages":1,"sovereign":-1,"twostate":0,"religion":1,"economy":1,"arab":-1,"democracy":1,"coreedu":2,"inquiry":2},
@@ -39,7 +39,7 @@
     ]
   },
   {
-    "id":"shas","name":"ש\"ס","leader":"אריה דרעי","bloc":"חרדי","seats":11,"color":"#2A2A2A","abbr":"שס","runs2026":true,"mergedInto":null,
+    "id":"shas","name":"ש\"ס","leader":"אריה דרעי","bloc":"חרדי","seats":11,"color":"#2A2A2A","abbr":"שס","ballot":"שס","runs2026":true,"mergedInto":null,
     "essence":"מפלגה חרדית־ספרדית. שמירה על עולם התורה, רשת חברתית, והגנה על מעמד הדת.",
     "status2026":"רצה בהרכבה המסורתי בראשות אריה דרעי.",
     "positions":{"draft":-2,"judicial":1,"gaza":1,"hostages":0,"sovereign":0,"twostate":-1,"religion":-2,"economy":-2,"arab":-1,"democracy":-1,"coreedu":-2,"inquiry":-1},
@@ -51,7 +51,7 @@
     ]
   },
   {
-    "id":"utj","name":"יהדות התורה","leader":"יצחק גולדקנופף","bloc":"חרדי","seats":7,"color":"#3A3A52","abbr":"יה","runs2026":true,"mergedInto":null,
+    "id":"utj","name":"יהדות התורה","leader":"יצחק גולדקנופף","bloc":"חרדי","seats":7,"color":"#3A3A52","abbr":"יה","ballot":"ג","runs2026":true,"mergedInto":null,
     "essence":"מפלגה חרדית־אשכנזית. מיקוד מוחלט בשמירת מעמד לומדי התורה ופטור מגיוס.",
     "status2026":"שותפות אגודת ישראל ודגל התורה; הצביעה לפיזור הכנסת על רקע משבר הגיוס.",
     "positions":{"draft":-2,"judicial":1,"gaza":0,"hostages":0,"sovereign":0,"twostate":-1,"religion":-2,"economy":-2,"arab":-1,"democracy":0,"coreedu":-2,"inquiry":-1},
@@ -63,7 +63,7 @@
     ]
   },
   {
-    "id":"tzionut","name":"הציונות הדתית","leader":"בצלאל סמוטריץ'","bloc":"ימין","seats":14,"color":"#8A4B1E","abbr":"צד","runs2026":true,"mergedInto":null,
+    "id":"tzionut","name":"הציונות הדתית","leader":"בצלאל סמוטריץ'","bloc":"ימין","seats":14,"color":"#8A4B1E","abbr":"צד","ballot":"ט","runs2026":true,"mergedInto":null,
     "essence":"ימין דתי־לאומי. ריבונות ביו\"ש, חיזוק ההתיישבות, ושינוי מערכת המשפט.",
     "status2026":"רצה ב‑2026 בנפרד מעוצמה יהודית (ב‑2022 רצו ברשימה משותפת, 14 מנדטים).",
     "positions":{"draft":-1,"judicial":2,"gaza":2,"hostages":-2,"sovereign":2,"twostate":-2,"religion":-2,"economy":-1,"arab":-2,"democracy":-2,"coreedu":-1,"inquiry":-2},
@@ -87,7 +87,7 @@
     ]
   },
   {
-    "id":"beytenu","name":"ישראל ביתנו","leader":"אביגדור ליברמן","bloc":"ימין","seats":6,"color":"#5C6B7A","abbr":"יב","runs2026":true,"mergedInto":null,
+    "id":"beytenu","name":"ישראל ביתנו","leader":"אביגדור ליברמן","bloc":"ימין","seats":6,"color":"#5C6B7A","abbr":"יב","ballot":"ל","runs2026":true,"mergedInto":null,
     "essence":"ימין חילוני. שילוב נדיר של קו ביטחוני נצי עם מאבק חריף בכפייה הדתית ובפטור החרדי.",
     "status2026":"רצה בראשות אביגדור ליברמן.",
     "positions":{"draft":2,"judicial":-1,"gaza":1,"hostages":0,"sovereign":0,"twostate":-1,"religion":2,"economy":1,"arab":-2,"democracy":1,"coreedu":2,"inquiry":2},
@@ -99,7 +99,7 @@
     ]
   },
   {
-    "id":"democrats","name":"הדמוקרטים","leader":"יאיר גולן","bloc":"שמאל","seats":0,"color":"#C13B5B","abbr":"דמ","runs2026":true,"mergedInto":null,
+    "id":"democrats","name":"הדמוקרטים","leader":"יאיר גולן","bloc":"שמאל","seats":0,"color":"#C13B5B","abbr":"דמ","ballot":"אמת","runs2026":true,"mergedInto":null,
     "essence":"שמאל. איחוד העבודה ומרצ. זכויות אדם, שלום, שוויון אזרחי, והגנה על הדמוקרטיה.",
     "status2026":"רשימה מאוחדת של העבודה ומרצ בראשות יאיר גולן.",
     "positions":{"draft":2,"judicial":-2,"gaza":-1,"hostages":2,"sovereign":-2,"twostate":2,"religion":2,"economy":2,"arab":2,"democracy":2,"coreedu":2,"inquiry":2},
@@ -110,7 +110,7 @@
     ]
   },
   {
-    "id":"hadash","name":"חד\"ש–תע\"ל","leader":"איימן עודה","bloc":"ערבי","seats":5,"color":"#C0392B","abbr":"חד","runs2026":true,"mergedInto":null,
+    "id":"hadash","name":"חד\"ש–תע\"ל","leader":"איימן עודה","bloc":"ערבי","seats":5,"color":"#C0392B","abbr":"חד","ballot":"ום","runs2026":true,"mergedInto":null,
     "essence":"רשימה ערבית־יהודית של שמאל. שוויון אזרחי מלא, סיום הכיבוש, וצדק חברתי.",
     "status2026":"שיתוף חד\"ש ותע\"ל; הרכב הרשימה ל‑2026 נבחן.",
     "positions":{"draft":0,"judicial":-2,"gaza":-2,"hostages":2,"sovereign":-2,"twostate":2,"religion":1,"economy":2,"arab":2,"democracy":2,"coreedu":1,"inquiry":2},
@@ -122,7 +122,7 @@
     ]
   },
   {
-    "id":"raam","name":"רע\"ם","leader":"מנסור עבאס","bloc":"ערבי","seats":5,"color":"#1E8449","abbr":"רע","runs2026":true,"mergedInto":null,
+    "id":"raam","name":"רע\"ם","leader":"מנסור עבאס","bloc":"ערבי","seats":5,"color":"#1E8449","abbr":"רע","ballot":"עם","runs2026":true,"mergedInto":null,
     "essence":"רשימה ערבית־אסלאמית פרגמטית. שיפור מעמד החברה הערבית מתוך שותפות פוליטית.",
     "status2026":"רצה בראשות מנסור עבאס בקו פרגמטי.",
     "positions":{"draft":0,"judicial":-1,"gaza":-2,"hostages":2,"sovereign":-2,"twostate":1,"religion":-1,"economy":2,"arab":2,"democracy":1,"coreedu":0,"inquiry":1},

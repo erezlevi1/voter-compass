@@ -123,7 +123,7 @@ main{flex:1}
 .party{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--t),box-shadow var(--t);cursor:pointer;position:relative;text-align:start}
 .party:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .party-top{display:flex;align-items:flex-start;gap:14px;padding:22px 22px 14px}
-.party-badge{width:48px;height:48px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:1.25rem;color:#fff}
+.party-badge{width:48px;height:48px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:1.05rem;letter-spacing:-.5px;color:#fff}
 .party-top h3{font-size:1.3rem;line-height:1.1}
 .party-top .leader{font-size:.9rem;color:var(--ink-3);margin-top:3px;font-weight:500}
 .party-bloc{font-size:.74rem;font-weight:600;letter-spacing:.04em;padding:3px 9px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line);margin-top:8px;display:inline-block}
@@ -134,13 +134,14 @@ main{flex:1}
 .seats .num{font-family:var(--serif);font-weight:900;font-size:1.5rem;color:var(--ink)}
 .seats .lab{font-size:.78rem;color:var(--ink-3)}
 .party .more{font-size:.86rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px}
-.party.new::before{content:"רשימה חדשה · 2026";position:absolute;top:14px;inset-inline-start:14px;font-size:.66rem;font-weight:700;letter-spacing:.04em;background:var(--gold);color:#fff;padding:3px 9px;border-radius:6px;z-index:1}
+.party.new::before{content:"רשימה חדשה · 2026";position:absolute;top:14px;inset-inline-end:14px;font-size:.66rem;font-weight:700;letter-spacing:.04em;background:var(--gold);color:#fff;padding:3px 9px;border-radius:6px;z-index:1}
+.party.new h3{padding-inline-end:96px}
 
 /* PARTY DETAIL */
 .pd-hero{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;padding:28px;border-radius:var(--radius-lg);color:#fff;position:relative;overflow:hidden;margin-bottom:30px}
 .pd-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.05),rgba(0,0,0,.32))}
 .pd-hero>*{position:relative;z-index:1}
-.pd-badge{width:74px;height:74px;border-radius:18px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:2rem;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(4px)}
+.pd-badge{width:74px;height:74px;border-radius:18px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:1.65rem;letter-spacing:-1px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);backdrop-filter:blur(4px)}
 .pd-hero h1{font-size:clamp(2rem,5vw,2.9rem);color:#fff}
 .pd-hero .leader{font-size:1.05rem;opacity:.95;margin-top:4px;font-weight:500}
 .pd-hero .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
@@ -710,7 +711,7 @@ function viewParties(){
     <div class="grid-cards">${mergedParties().map(p=>`
       <a class="party merged" href="#/party/${p.id}" aria-label="פרטים על ${esc(p.name)} (התמזגה)">
         <div class="party-top">
-          <div class="party-badge" style="background:${p.color}">${esc(p.abbr)}</div>
+          <div class="party-badge" style="background:${p.color}">${esc(p.ballot||p.abbr)}</div>
           <div style="flex:1"><h3>${esc(p.name)}</h3><div class="leader">${esc(p.leader)}</div><span class="party-bloc">${esc(p.bloc)}</span></div>
         </div>
         <div class="party-body">
@@ -730,7 +731,7 @@ function viewParties(){
       grid.innerHTML=sorted.map(p=>`
         <a class="party ${p.isNew?'new':''}" href="#/party/${p.id}" aria-label="פרטים על ${esc(p.name)}">
           <div class="party-top">
-            <div class="party-badge" style="background:${p.color}">${esc(p.abbr)}</div>
+            <div class="party-badge" style="background:${p.color}">${esc(p.ballot||p.abbr)}</div>
             <div style="flex:1"><h3>${esc(p.name)}</h3><div class="leader">${esc(p.leader)}</div><span class="party-bloc">${esc(p.bloc)}</span></div>
           </div>
           <div class="party-body">
@@ -765,12 +766,13 @@ function viewParty(m){
   const html=`<div class="page"><div class="wrap">
     <a href="#/parties" class="breadcrumb">${chevBack()} כל המפלגות</a>
     <div class="pd-hero" style="background:${p.color}">
-      <div class="pd-badge">${esc(p.abbr)}</div>
+      <div class="pd-badge">${esc(p.ballot||p.abbr)}</div>
       <div>
         <h1>${esc(p.name)}</h1>
         <div class="leader">בראשות ${esc(p.leader)}</div>
         <div class="meta">
           <span class="pd-pill">גוש ${esc(p.bloc)}</span>
+          <span class="pd-pill">${p.ballot?`אות הפתק: ${esc(p.ballot)}`:'אות הפתק טרם נקבעה'}</span>
           ${p.seats>0?`<span class="pd-pill">${p.seats} מנדטים · כנסת ה‑25</span>`:`<span class="pd-pill">רשימה חדשה · 2026</span>`}
         </div>
       </div>
