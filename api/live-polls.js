@@ -93,21 +93,27 @@ module.exports = async (req, res) => {
     const revid = j && j.parse && j.parse.revid;
     if (!wt) return res.status(200).json({ ok: false, error: 'no-wikitext' });
 
-    const ti = wt.indexOf('[[Likud]]');
-    if (ti < 0) return res.status(200).json({ ok: false, error: 'results-table-not-found' });
-    const tStart = wt.lastIndexOf('{|', ti);
-    const tEnd = wt.indexOf('\n|}', ti);
-    const table = wt.slice(tStart, tEnd > 0 ? tEnd : undefined);
-
-    // בדיקת בטיחות: סדר עמודות המפלגות בכותרת זהה לצפוי
-    const headEnd = table.indexOf('{{Opdrts');
-    const headSeg = table.slice(0, headEnd > 0 ? headEnd : 4000);
-    const links = [...headSeg.matchAll(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g)].map(m => m[1]);
-    const seen = [];
-    links.forEach(l => { if (HEADER_ORDER.includes(l) && !seen.includes(l)) seen.push(l); });
-    if (seen.join('¦') !== HEADER_ORDER.join('¦')) {
-      return res.status(200).json({ ok: false, error: 'source-format-changed', got: seen });
+    // איתור טבלת התוצאות: סורקים את כל הטבלאות בעמוד ובוחרים את זו שכותרתה
+    // מכילה את כל עמודות המפלגות בדיוק בסדר הצפוי. ([[Likud]] מופיע גם בטקסט
+    // חופשי בעמוד, לכן אי אפשר לעגן עליו ישירות.) אם אף טבלה לא תואמת —
+    // מבנה המקור השתנה, ומחזירים שגיאה בטוחה במקום נתונים שגויים.
+    let table = null, lastSeen = [];
+    let idx = 0;
+    while (true) {
+      const s = wt.indexOf('{|', idx);
+      if (s < 0) break;
+      const e = wt.indexOf('\n|}', s);
+      const seg = wt.slice(s, e > 0 ? e : undefined);
+      const hE = seg.indexOf('{{Opdrts');
+      const hSeg = seg.slice(0, hE > 0 ? hE : 4000);
+      const links = [...hSeg.matchAll(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g)].map(m => m[1]);
+      const seen = [];
+      links.forEach(l => { if (HEADER_ORDER.includes(l) && !seen.includes(l)) seen.push(l); });
+      if (seen.length) lastSeen = seen;
+      if (seen.join('¦') === HEADER_ORDER.join('¦')) { table = seg; break; }
+      idx = e > 0 ? e + 2 : s + 2;
     }
+    if (!table) return res.status(200).json({ ok: false, error: 'source-format-changed', got: lastSeen });
 
     const rows = table.split(/\n\|-/).slice(1);
     const polls = [];
