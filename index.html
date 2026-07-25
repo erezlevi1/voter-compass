@@ -1072,7 +1072,8 @@ function viewNews(){
       const g=document.getElementById('polls-grid'); if(g&&LIVE.merged) g.innerHTML=pollCardsHtml();
       const s=document.getElementById('live-polls-status');
       if(s){const r=LIVE.report;
-        if(r&&r.ok&&LIVE.merged) s.innerHTML=`${checkIcon()}<div>נמשכו ${LIVE.merged} סקרים חדשים מ"${esc(LIVE.source||'ויקיפדיה')}" — עברו את כל ${r.checks.length} בדיקות שער האימות ומסומנים בתג "חי". <a href="#/trust">לפירוט במרכז האמון ←</a></div>`;
+        if(r&&r.blackout) s.innerHTML=`${checkIcon()}<div>${esc(r.checks[0].detail)}</div>`;
+        else if(r&&r.ok&&LIVE.merged) s.innerHTML=`${checkIcon()}<div>נמשכו ${LIVE.merged} סקרים חדשים מ"${esc(LIVE.source||'ויקיפדיה')}" — עברו את כל ${r.checks.length} בדיקות שער האימות ומסומנים בתג "חי". <a href="#/trust">לפירוט במרכז האמון ←</a></div>`;
         else if(r&&r.ok) s.innerHTML=`${checkIcon()}<div>הצינור החי פעיל ונבדק כעת: אין סקר חדש במקור מעבר למה שכבר במאגר. <a href="#/trust">לדוח שער האימות ←</a></div>`;
         else s.innerHTML=`${warnIcon()}<div>${esc((r&&r.checks&&r.checks[0]&&r.checks[0].detail)||'הנתונים החיים אינם זמינים כרגע; מוצג המאגר המאומת הידני.')}</div>`;
       }
@@ -1451,10 +1452,25 @@ function validateLivePolls(j){
   add('src','מקור לכל סקר',ps.every(p=>p.sourceUrl),'כל סקר חי מקושר לפרסום המקורי או לעמוד המקור.');
   return {ok:checks.every(c=>c.status==='pass'),checks,at:Date.now()};
 }
+/* חוק הבחירות (דרכי תעמולה), התשי"ט-1959: אסור לפרסם תוצאות סקר שלא פורסמו קודם,
+   מתום יום שישי שלפני פתיחת הקלפיות ועד סגירתן. הצינור כאן אוטומטי, ולכן חייב שער חוקי
+   שחוסם מיזוג סקרים חדשים בטווח הזה — הסקרים שכבר במאגר מוסיפים להיות מוצגים כרגיל. */
+function pollBlackout(){
+  const b=DATA.meta&&DATA.meta.pollBlackout; if(!b)return {active:false};
+  const now=Date.now(),from=Date.parse(b.from),until=Date.parse(b.until);
+  if(isNaN(from)||isNaN(until))return {active:false};
+  return {active:now>=from&&now<=until,from,until};
+}
 let livePromise=null;
 function loadLivePolls(){
   if(livePromise)return livePromise;
   livePromise=(async()=>{
+    const bl=pollBlackout();
+    if(bl.active){
+      LIVE.report={ok:false,blackout:true,checks:[{id:'blackout',label:'תקופת איסור פרסום סקרים',status:'pass',
+        detail:'לפי חוק הבחירות (דרכי תעמולה), התשי"ט-1959, אין לפרסם תוצאות סקר שלא פורסמו קודם לכן — מתום יום שישי שלפני פתיחת הקלפיות ועד סגירתן. משיכת הסקרים החיים מושהית אוטומטית עד תום התקופה; הסקרים שכבר פורסמו ונמצאים במאגר מוצגים כרגיל.'}],at:Date.now()};
+      return LIVE;
+    }
     try{
       const r=await fetch('/api/live-polls',{cache:'no-store',signal:AbortSignal.timeout(9500)});
       if(!r.ok)throw new Error('http '+r.status);
@@ -1523,7 +1539,7 @@ function viewTrust(){
     <div class="audit-list" id="roster-check"><div class="ai-detail">מצליב מול הסקרים העדכניים…</div></div>
 
     <h2 class="trust-h">שער האימות לנתונים חיים</h2>
-    <p class="trust-sub">סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה ועוברים שער אימות כפול (בשרת ושוב בדפדפן) לפני שהם נכנסים לאפליקציה: מבנה, מיפוי מפלגות למאגר, טווחי ערכים, סכום מנדטים, תאריכים ומקור. נתון שנכשל באחת הבדיקות — לא נכנס. הבדיקה שלמטה רצה עכשיו.</p>
+    <p class="trust-sub">סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה ועוברים שער אימות כפול (בשרת ושוב בדפדפן) לפני שהם נכנסים לאפליקציה: מבנה, מיפוי מפלגות למאגר, טווחי ערכים, סכום מנדטים, תאריכים ומקור. נתון שנכשל באחת הבדיקות — לא נכנס. בנוסף, שער חוקי חוסם אוטומטית מיזוג סקרים חדשים בתקופת האיסור שלפני יום הבחירות, לפי חוק הבחירות (דרכי תעמולה). הבדיקה שלמטה רצה עכשיו.</p>
     <div class="audit-list" id="live-gate"><div class="ai-detail">מריץ את שער האימות…</div></div>
 
     <h2 class="trust-h">מקור וסטטוס אימות לכל נתון</h2>
