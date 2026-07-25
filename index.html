@@ -460,6 +460,16 @@ td .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-
 .src-list a{color:var(--accent);font-weight:600}
 .src-list a:hover{text-decoration:underline}
 
+/* FRESHNESS BANNER */
+.fresh-banner{border-bottom:1px solid var(--line)}
+.fresh-banner.soft{background:var(--surface-2)}
+.fresh-banner.warn{background:color-mix(in srgb,var(--gold) 13%,var(--paper));border-bottom-color:var(--gold)}
+.fb-inner{display:flex;align-items:flex-start;gap:10px;padding:11px 0;font-size:.88rem;line-height:1.55;color:var(--ink-2)}
+.fb-inner svg{width:17px;height:17px;flex:0 0 auto;margin-top:2px;color:var(--gold)}
+.fresh-banner.soft .fb-inner svg{color:var(--ink-3)}
+.fb-inner a{color:var(--accent);font-weight:600}
+.fb-inner strong{color:var(--ink)}
+
 /* GLOSSARY + LEGAL */
 .gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:16px}
 .gloss-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px 18px}
@@ -504,7 +514,8 @@ html.acc-noanim{scroll-behavior:auto}
 
 /* FOOTER */
 .footer{border-top:3px double var(--line-2);padding:clamp(36px,5vw,56px) 0 46px;margin-top:40px}
-.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:32px}
+.footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px}
+@media (max-width:960px){.footer-grid{grid-template-columns:1fr 1fr;gap:26px}}
 @media (max-width:720px){.footer-grid{grid-template-columns:1fr;gap:24px}}
 .footer h4{font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
 .footer .brand{margin-bottom:14px}
@@ -545,6 +556,7 @@ html.acc-noanim{scroll-behavior:auto}
   </div>
 </header>
 
+<div id="fresh-banner" hidden></div>
 <main id="view" tabindex="-1"></main>
 
 <footer class="footer">
@@ -575,6 +587,16 @@ html.acc-noanim{scroll-behavior:auto}
           <li><a href="#/accessibility">הצהרת נגישות</a></li>
           <li><a href="#/privacy">מדיניות פרטיות</a></li>
           <li id="foot-updated"></li>
+        </ul>
+      </div>
+      <div>
+        <h4>מדריכים</h4>
+        <ul>
+          <li><a href="/guide/parties">כל המפלגות ואותיות הפתק</a></li>
+          <li><a href="/guide/polls">הסקרים האחרונים</a></li>
+          <li><a href="/guide/issues">נושאי הבחירות</a></li>
+          <li><a href="/guide/glossary">מילון מונחים</a></li>
+          <li><a href="/guide/faq">שאלות נפוצות</a></li>
         </ul>
       </div>
     </div>
@@ -693,6 +715,7 @@ function router(){
   });
   const res=matched.fn(m);
   view.innerHTML='<div class="view">'+res.html+'</div>';
+  try{freshnessBanner();}catch(e){}
   window.scrollTo(0,0);
   view.focus({preventScroll:true});
   if(res.after) res.after();
@@ -1392,6 +1415,46 @@ function runAudit(){
   add('steelman-balance','איזון אורך הטיעונים בין הצדדים', worst.ratio<=1.6?'pass':'warn', `בכל הסבר נמדד יחס האורך בין טיעוני שני הצדדים. היחס הגדול ביותר: ${worst.ratio?worst.ratio.toFixed(2):'-'}${worst.title?' ('+worst.title+')':''} — ${worst.ratio<=1.6?'בתחום המאוזן (עד 1.6).':'חורג מהסף; מומלץ לאזן את אורך הטיעונים.'}`);
   return checks;
 }
+/* ----- מודעות-עצמית לטריות הנתונים -----
+   האפליקציה מתחזקת את עצמה בשני מסלולים: סקרים וחדשות מתעדכנים אוטומטית,
+   אבל מפת המפלגות (מיזוגים, עמדות) היא עריכה אנושית. כדי שהאמון לא ייפגע
+   כשאין מי שיעדכן, האפליקציה מודדת את גיל הנתונים ומצהירה עליו מיוזמתה. */
+function dataAge(){
+  const d=Date.parse(DATA.meta.lastUpdated);
+  if(isNaN(d))return {days:null,level:'unknown'};
+  const days=Math.max(0,Math.floor((Date.now()-d)/86400000));
+  const toVote=Math.ceil((Date.parse(DATA.meta.electionDay||'')-Date.now())/86400000);
+  // ככל שמתקרבים לבחירות, המפה משתנה מהר יותר — הסף מתהדק
+  const near=!isNaN(toVote)&&toVote<=60;
+  const warnAt=near?21:45, staleAt=near?45:90;
+  return {days,daysToVote:isNaN(toVote)?null:toVote,level:days>=staleAt?'stale':(days>=warnAt?'aging':'fresh')};
+}
+/* איתות חזק לשינוי במפה: מפלגה פעילה שנעדרת מכל הסקרים העדכניים */
+function mapDriftSignal(){
+  const win=recentPollWindow(3); if(win.length<2)return null;
+  const seen=new Set(); win.forEach(p=>p.figures.forEach(f=>f.partyId&&seen.add(f.partyId)));
+  const missing=activeParties().filter(p=>!seen.has(p.id)&&p.seats>0);
+  return missing.length?missing.map(p=>p.name):null;
+}
+function freshnessBanner(){
+  const el=document.getElementById('fresh-banner'); if(!el)return;
+  const a=dataAge(),drift=mapDriftSignal();
+  let msg='',cls='';
+  if(drift){
+    cls='warn';
+    msg=`<strong>ייתכן שינוי במפה הפוליטית:</strong> ${esc(drift.join(', '))} אינה מופיעה בסקרים האחרונים. ייתכן מיזוג או ירידה מתחת לאחוז החסימה. הסקרים והחדשות באתר מתעדכנים אוטומטית; פרטי המפלגה עשויים להיות מעודכנים פחות.`;
+  }else if(a.level==='stale'){
+    cls='warn';
+    msg=`<strong>שימו לב:</strong> פרטי המפלגות והעמדות עודכנו לאחרונה לפני ${a.days} ימים (${esc(heDate(DATA.meta.lastUpdated))}) ועשויים שלא לשקף מיזוגים או שינויים מאז. הסקרים והחדשות באתר כן מתעדכנים אוטומטית מדי יום.`;
+  }else if(a.level==='aging'){
+    cls='soft';
+    msg=`פרטי המפלגות עודכנו לפני ${a.days} ימים. הסקרים והחדשות מתעדכנים אוטומטית. <a href="#/trust">מה נבדק אוטומטית ←</a>`;
+  }
+  if(!msg){el.innerHTML='';el.hidden=true;return;}
+  el.hidden=false; el.className='fresh-banner '+cls;
+  el.innerHTML=`<div class="wrap fb-inner">${cls==='warn'?warnIcon():svgIcon('flag')}<div>${msg}</div></div>`;
+}
+
 /* מנגנון הצלבה: מצליב בין קבצי הנתונים ומתריע על סתירות ועל ערבוב תקופות */
 function crossCheck(){
   const out=[]; const add=(id,label,status,detail)=>out.push({id,label,status,detail});

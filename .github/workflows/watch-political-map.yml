@@ -1,0 +1,46 @@
+name: שומר המפה הפוליטית
+
+# רץ אוטומטית פעם ביום ומשווה את מפת המפלגות שבמאגר מול הסקרים העדכניים
+# בוויקיפדיה. כשמשהו משתנה (מפלגה חדשה, מיזוג, רשימה שנעלמה) — נפתח Issue
+# עם פירוט, וגיטהאב שולח התראה במייל. כך האתר לא מתיישן בשקט.
+on:
+  schedule:
+    - cron: '0 5 * * *'   # כל יום ב-08:00 שעון ישראל
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקת שינויים במפה
+        id: check
+        run: node .github/scripts/watch-map.js
+      - name: פתיחת Issue אם השתנה משהו
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = process.env.REPORT;
+            const title = 'שינוי אפשרי במפה הפוליטית — נדרשת בדיקה';
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'map-drift'
+            });
+            if (open.data.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: open.data[0].number, body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['map-drift']
+              });
+            }
+        env:
+          REPORT: ${{ steps.check.outputs.report }}
