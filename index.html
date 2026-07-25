@@ -1094,6 +1094,8 @@ const SEED=[
   {t:'יוקר המחיה והיום שאחרי המלחמה: הנושאים שיכריעו את הבחירות',src:'כלכלה'}
 ];
 function relTime(d){if(!d)return'';const s=(Date.now()-d.getTime())/1000;if(s<3600)return'לפני '+Math.max(1,Math.round(s/60))+' דק׳';if(s<86400)return'לפני '+Math.round(s/3600)+' שע׳';return'לפני '+Math.round(s/86400)+' ימים'}
+// חוסם קישורים שאינם http(s) — הגנה מפני javascript:/data: שעלולים להגיע מפיד או פרוקסי שנפרץ
+function safeUrl(u){return /^https?:\/\//i.test(String(u||''))?u:'';}
 function hostOf(link){try{return new URL(link).hostname.replace(/^www\./,'');}catch(e){return '';}}
 function newsCard(it){
   const host=it.site||(it.searchLink?'':hostOf(it.link));
@@ -1115,7 +1117,7 @@ async function getNews(force){
     if(res.ok){
       const j=await res.json();
       if(j&&j.items&&j.items.length){
-        const items=j.items.map(it=>({t:it.t,src:it.src,site:it.site,link:it.link,dt:it.dt?new Date(it.dt):null}));
+        const items=j.items.map(it=>({t:it.t,src:it.src,site:it.site,link:safeUrl(it.link),dt:it.dt?new Date(it.dt):null}));
         newsCache={items,live:true,direct:true,at:Date.now()}; return newsCache;
       }
     }
@@ -1130,7 +1132,7 @@ async function getNews(force){
         let src=(it.querySelector('source')?.textContent||'').trim();
         const mm=title.match(/^(.*) - ([^-]+)$/); if(mm){title=mm[1].trim(); if(!src)src=mm[2].trim();}
         const pd=it.querySelector('pubDate')?.textContent;
-        return {t:title,src:src||'חדשות',via:'Google News',link:it.querySelector('link')?.textContent||'',dt:pd?new Date(pd):null};
+        return {t:title,src:src||'חדשות',via:'Google News',link:safeUrl(it.querySelector('link')?.textContent||''),dt:pd?new Date(pd):null};
       }).filter(x=>x.t);
       if(items.length){ newsCache={items,live:true,direct:false,at:Date.now()}; return newsCache; }
     }catch(e){}

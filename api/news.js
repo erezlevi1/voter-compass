@@ -51,7 +51,9 @@ async function pull(feed) {
       const pd = field(b, 'pubDate');
       if (!link) link = field(b, 'guid');
       if (!t || !/^https?:\/\//.test(link)) continue;
-      if (!feed.all && !(POL.test(t) || POL.test(desc))) continue;
+      // סינון לפי הכותרת בלבד. בדיקת ה-description הכניסה רעש (כתבות בריאות/חו"ל
+      // שהתקציר שלהן הכיל מילה פוליטית במקרה) — באתר בחירות זו פגיעה באמינות.
+      if (!feed.all && !POL.test(t)) continue;
       // ⚖️ הערה משפטית: ה-description נשלף אך ורק לסינון מילות-מפתח ולעולם אינו מוחזר ללקוח.
       // מוחזרים רק: כותרת המפרסם (verbatim, לא מנוסחת מחדש), קישור ישיר, שם מקור ותאריך.
       // אין להוסיף כאן את desc או תגיות <img> — הצגתם תיצור חשיפה לזכויות יוצרים.
