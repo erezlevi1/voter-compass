@@ -10,4 +10,5 @@
   <url><loc>https://voter-compass.vercel.app/guide/issues</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://voter-compass.vercel.app/guide/glossary</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://voter-compass.vercel.app/guide/faq</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://voter-compass.vercel.app/guide/trust</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
