@@ -83,16 +83,25 @@ function parseDate(cell) {
   return null;
 }
 
+const { memo, canonical, tooMany } = require('./_shared');
+
 module.exports = async (req, res) => {
+  if (canonical(req, res, [], '/api/live-polls')) return;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+  if (tooMany('live-polls', 40, 60000)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ ok: false, error: 'rate-limited' });
+  }
   try {
+    // הוויקיטקסט (~230KB) נמשך לכל היותר פעם ב-15 דקות לכל מופע
+    const out = await memo('live-polls', 15 * 60 * 1000, async () => {
     const r = await fetch(API, { headers: { 'User-Agent': UA, 'Accept': 'application/json' }, signal: AbortSignal.timeout(9000) });
-    if (!r.ok) return res.status(200).json({ ok: false, error: 'wiki-http-' + r.status });
+    if (!r.ok) return { ok: false, error: 'wiki-http-' + r.status };
     const j = await r.json();
     const wt = j && j.parse && j.parse.wikitext;
     const revid = j && j.parse && j.parse.revid;
-    if (!wt) return res.status(200).json({ ok: false, error: 'no-wikitext' });
+    if (!wt) return { ok: false, error: 'no-wikitext' };
 
     // איתור טבלת התוצאות: סורקים את כל הטבלאות בעמוד ובוחרים את זו שכותרתה
     // מכילה את כל עמודות המפלגות בדיוק בסדר הצפוי. ([[Likud]] מופיע גם בטקסט
@@ -114,7 +123,7 @@ module.exports = async (req, res) => {
       if (seen.join('¦') === HEADER_ORDER.join('¦')) { table = seg; break; }
       idx = e > 0 ? e + 2 : s + 2;
     }
-    if (!table) return res.status(200).json({ ok: false, error: 'source-format-changed', got: lastSeen });
+    if (!table) return { ok: false, error: 'source-format-changed', got: lastSeen };
 
     const rows = table.split(/\n\|-/).slice(1);
     const polls = [];
@@ -165,15 +174,17 @@ module.exports = async (req, res) => {
         sum: figures.reduce((a, f) => a + f.seats, 0) + excluded.reduce((a, f) => a + f.seats, 0)
       });
     }
-    if (!polls.length) return res.status(200).json({ ok: false, error: 'no-valid-rows' });
-    res.status(200).json({
+    if (!polls.length) return { ok: false, error: 'no-valid-rows' };
+    return {
       ok: true,
       source: 'ויקיפדיה — סקרי הבחירות לכנסת ה-26',
       pageUrl: PAGE_URL,
       revid,
       fetchedAt: Date.now(),
       polls
+    };
     });
+    res.status(200).json(out);
   } catch (e) {
     res.status(200).json({ ok: false, error: String((e && e.message) || e) });
   }

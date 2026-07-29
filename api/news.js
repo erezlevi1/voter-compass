@@ -65,10 +65,21 @@ async function pull(feed) {
   }
 }
 
+const { memo, canonical, tooMany } = require('./_shared');
+
 module.exports = async (req, res) => {
+  // כתובת עם פרמטר לא מוכר מנותבת לכתובת הקנונית, שמוגשת מהקאש — כך שלא
+  // ניתן לעקוף את הקאש ולהריץ את הפונקציה (ואת 6 הבקשות היוצאות) שוב ושוב.
+  if (canonical(req, res, [], '/api/news')) return;
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  if (tooMany('news', 60, 60000)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ items: [], live: false, error: 'rate-limited', at: Date.now() });
+  }
   try {
+    // הפידים נמשכים לכל היותר פעם ב-5 דקות לכל מופע, גם אם מגיעות אלפי בקשות
+    const payload = await memo('news', 5 * 60 * 1000, async () => {
     const lists = await Promise.all(FEEDS.map(pull));
     let items = [].concat(...lists);
     const seen = new Set();
@@ -78,7 +89,9 @@ module.exports = async (req, res) => {
     const per = {}, balanced = [];
     for (const it of items) { per[it.src] = (per[it.src] || 0) + 1; if (per[it.src] <= 6) balanced.push(it); }
     items = balanced.slice(0, 18);
-    res.status(200).json({ items, live: items.length > 0, sources: FEEDS.map(f => f.site), at: Date.now() });
+      return { items, live: items.length > 0, sources: FEEDS.map(f => f.site), at: Date.now() };
+    });
+    res.status(200).json(payload);
   } catch (e) {
     res.status(200).json({ items: [], live: false, at: Date.now() });
   }

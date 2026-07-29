@@ -6,14 +6,20 @@
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const BASE = 'https://voter-compass.vercel.app';
 
-async function loadData(host, names) {
-  const origin = host ? `https://${host}` : BASE;
+const { memo, canonical, tooMany } = require('./_shared');
+
+// כתובת הבסיס קבועה ואינה נגזרת מכותרת Host — כותרת שהשולח שולט בה יכולה
+// להפנות את הבקשות היוצאות לשרת זר (SSRF).
+async function loadData(_host, names) {
   const out = {};
   await Promise.all(names.map(async n => {
-    try {
-      const r = await fetch(`${origin}/data/${n}.json`, { signal: AbortSignal.timeout(6000) });
-      out[n] = r.ok ? await r.json() : null;
-    } catch (e) { out[n] = null; }
+    // כל קובץ נתונים נמשך לכל היותר פעם ב-10 דקות לכל מופע חם
+    out[n] = await memo(`data:${n}`, 10 * 60 * 1000, async () => {
+      try {
+        const r = await fetch(`${BASE}/data/${n}.json`, { signal: AbortSignal.timeout(6000) });
+        return r.ok ? await r.json() : null;
+      } catch (e) { return null; }
+    }).catch(() => null);
   }));
   return out;
 }
@@ -137,10 +143,11 @@ ${merged.length ? `<h2>רשימות שהתמזגו</h2><p>${merged.map(p => `<a 
     let live = [];
     if (!blocked) {
       try {
-        const origin = host ? `https://${host}` : BASE;
-        const r = await fetch(`${origin}/api/live-polls`, { signal: AbortSignal.timeout(7000) });
-        if (r.ok) {
-          const j = await r.json();
+        const j = await memo('page:live-polls', 15 * 60 * 1000, async () => {
+          const r = await fetch(`${BASE}/api/live-polls`, { signal: AbortSignal.timeout(7000) });
+          return r.ok ? await r.json() : null;
+        });
+        {
           if (j && j.ok && Array.isArray(j.polls)) {
             const seen = new Set(base.map(p => `${p.date}|${p.pollster}`));
             live = j.polls.filter(p => p.figures && p.figures.length && !seen.has(`${p.date}|${p.pollster}`))
@@ -362,6 +369,14 @@ ${blocks}
 module.exports = async (req, res) => {
   const slug = String((req.query && req.query.slug) || '').replace(/[^a-z]/g, '');
   const id = String((req.query && req.query.id) || '').replace(/[^a-z0-9-]/gi, '');
+  // פרמטר שאינו slug/id => הפניה לכתובת הקנונית, כדי שלא ניתן לעקוף את הקאש
+  const canonPath = (slug === 'party' || slug === 'issue') && id ? `/guide/${slug}/${id}` : (slug ? `/guide/${slug}` : '/guide/parties');
+  if (canonical(req, res, ['slug', 'id'], canonPath, false)) return;
+  if (tooMany('page', 120, 60000)) {
+    res.setHeader('Retry-After', '60');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.status(429).send('Too many requests');
+  }
   const host = req.headers && req.headers.host;
   const fn = PAGES[slug];
   const notFound = () => {

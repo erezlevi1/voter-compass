@@ -23,15 +23,25 @@ const day = d => {
   return isNaN(t) ? null : t.toISOString().slice(0, 10);
 };
 
-async function grab(origin, name) {
-  try {
-    const r = await fetch(`${origin}/data/${name}.json`, { signal: AbortSignal.timeout(5000) });
-    return r.ok ? await r.json() : null;
-  } catch (e) { return null; }
+const { memo, canonical, tooMany } = require('./_shared');
+
+// כתובת הבסיס קבועה — לא נגזרת מכותרת Host שהשולח שולט בה (SSRF).
+async function grab(_origin, name) {
+  return memo(`sm:${name}`, 10 * 60 * 1000, async () => {
+    try {
+      const r = await fetch(`${BASE}/data/${name}.json`, { signal: AbortSignal.timeout(5000) });
+      return r.ok ? await r.json() : null;
+    } catch (e) { return null; }
+  }).catch(() => null);
 }
 
 module.exports = async (req, res) => {
-  const origin = req.headers && req.headers.host ? `https://${req.headers.host}` : BASE;
+  if (canonical(req, res, [], '/sitemap.xml')) return;
+  if (tooMany('sitemap', 40, 60000)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).send('Too many requests');
+  }
+  const origin = BASE;
   const today = day(Date.now());
   let parties = FALLBACK_PARTIES, issues = FALLBACK_ISSUES;
   let contentMod = today, pollsMod = today;
