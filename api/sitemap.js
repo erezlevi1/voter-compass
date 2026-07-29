@@ -44,12 +44,19 @@ module.exports = async (req, res) => {
     if (Array.isArray(ij) && ij.length) issues = [...new Set(ij.map(i => i.explainer).filter(Boolean))];
     // עמודי התוכן משתנים כשהמאגר מתעדכן; עמוד הסקרים — כשמתפרסם סקר חדש.
     if (mj && mj.lastUpdated) contentMod = day(mj.lastUpdated) || today;
+    // תאריך הסקר האחרון — מהמאגר הידני ומהצינור החי גם יחד. חשוב שיהיה מדויק:
+    // lastmod שמצהיר על טריות שאינה קיימת גורם לגוגל להתעלם מהשדה.
+    const dates = [contentMod];
     const latest = plj && Array.isArray(plj.polls) && plj.polls.find(p => p.date);
-    if (latest) {
-      const d = day(latest.date);
-      // הצינור החי מוסיף סקרים אחרי הפריסה, לכן לוקחים את המאוחר מבין השניים
-      pollsMod = d && d > contentMod ? d : contentMod;
-    } else pollsMod = contentMod;
+    if (latest) dates.push(day(latest.date));
+    try {
+      const lr = await fetch(`${origin}/api/live-polls`, { signal: AbortSignal.timeout(5000) });
+      if (lr.ok) {
+        const lj = await lr.json();
+        if (lj && lj.ok && Array.isArray(lj.polls) && lj.polls.length) dates.push(day(lj.polls[0].date));
+      }
+    } catch (e) { /* נשארים עם מה שיש */ }
+    pollsMod = dates.filter(Boolean).sort().pop() || contentMod;
   } catch (e) { /* נשארים עם ברירות המחדל */ }
 
   const rows = [];

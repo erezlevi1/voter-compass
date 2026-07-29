@@ -67,6 +67,8 @@ th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--line)}
 th{font-weight:700;color:var(--ink-3);font-size:.85rem}
 .tw{overflow-x:auto}
 .ballot{display:inline-block;background:var(--accent);color:#fff;font-weight:700;border-radius:6px;padding:1px 9px;font-size:.85rem}
+.live-tag{display:inline-block;font-size:.66rem;font-weight:700;color:#1E7A4A;border:1px solid currentColor;border-radius:20px;padding:1px 8px;vertical-align:middle;white-space:nowrap}
+@media(prefers-color-scheme:dark){.live-tag{color:#5BBF86}}
 a{color:var(--accent)}
 .note{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:13px 15px;margin:20px 0;font-size:.9rem;color:var(--ink-2)}
 .note strong{color:var(--ink)}
@@ -129,9 +131,29 @@ ${merged.length ? `<h2>רשימות שהתמזגו</h2><p>${merged.map(p => `<a 
   async polls(host) {
     const d = await loadData(host, ['polls', 'meta', 'parties']);
     const blocked = pollsBlocked(d.meta);
-    const list = ((d.polls && d.polls.polls) || []).filter(p => p.figures && p.figures.length).slice(0, 6);
+    const base = ((d.polls && d.polls.polls) || []).filter(p => p.figures && p.figures.length);
+    // הסקרים החיים נמשכים מאותו צינור שמזין את האפליקציה, כדי שהעמוד לא יציג
+    // נתון בן שבועות. בתקופת איסור הפרסום לא מושכים כלל — רק מה שכבר פורסם.
+    let live = [];
+    if (!blocked) {
+      try {
+        const origin = host ? `https://${host}` : BASE;
+        const r = await fetch(`${origin}/api/live-polls`, { signal: AbortSignal.timeout(7000) });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.ok && Array.isArray(j.polls)) {
+            const seen = new Set(base.map(p => `${p.date}|${p.pollster}`));
+            live = j.polls.filter(p => p.figures && p.figures.length && !seen.has(`${p.date}|${p.pollster}`))
+              .map(p => ({ ...p, live: true }));
+          }
+        }
+      } catch (e) { /* נופלים למאגר הידני בלבד */ }
+    }
+    const list = [...live, ...base]
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 6);
     const nameOf = f => f.party || ((d.parties || []).find(x => x.id === f.partyId) || {}).name || '';
-    const blocks = list.map(pl => `<div class="card"><h3>${esc(pl.pollster)} · ${esc(heDate(pl.date))}</h3>
+    const blocks = list.map(pl => `<div class="card"><h3>${esc(pl.pollster)} · ${esc(heDate(pl.date))}${pl.live ? ' <span class="live-tag">נמשך אוטומטית · עבר אימות</span>' : ''}</h3>
 ${pl.summary ? `<p style="margin:6px 0 9px">${esc(pl.summary)}</p>` : ''}
 <div class="tw"><table><tbody>${[...pl.figures].sort((a, b) => b.seats - a.seats).map(f => `<tr><td>${esc(nameOf(f))}</td><td style="width:60px;font-weight:700">${f.seats}</td></tr>`).join('')}</tbody></table></div>
 ${pl.sourceUrl ? `<p style="margin:9px 0 0"><a href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener nofollow">לסקר המלא במקור ←</a></p>` : ''}</div>`).join('');
