@@ -78,6 +78,9 @@ th{font-weight:700;color:var(--ink-3);font-size:.85rem}
 a{color:var(--accent)}
 .note{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:13px 15px;margin:20px 0;font-size:.9rem;color:var(--ink-2)}
 .note strong{color:var(--ink)}
+details.faq{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px 15px;margin:10px 0 18px}
+details.faq summary{cursor:pointer;font-weight:600;font-size:.92rem;color:var(--ink-2)}
+details.faq[open] summary{color:var(--accent);margin-bottom:9px}
 footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 40px;font-size:.85rem;color:var(--ink-3)}
 footer a{color:var(--ink-3);margin-inline-end:14px}
 .more{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0}
@@ -106,6 +109,26 @@ ${body}
   <a href="${BASE}/">לאפליקציה המלאה</a><a href="${BASE}/#/trust">מרכז האמון</a><a href="${BASE}/#/privacy">פרטיות</a><a href="${BASE}/#/accessibility">נגישות</a>
 </div></footer>
 </body></html>`;
+}
+
+// מאחד את הסקרים מהמאגר הידני ומהצינור החי, ממוין מהחדש לישן.
+// מכבד את איסור פרסום הסקרים: בתקופת האיסור לא נמשכים סקרים חדשים.
+async function allPolls(d) {
+  const base = ((d.polls && d.polls.polls) || []).filter(p => p.figures && p.figures.length);
+  if (pollsBlocked(d.meta)) return base;
+  let live = [];
+  try {
+    const j = await memo('page:live-polls', 15 * 60 * 1000, async () => {
+      const r = await fetch(`${BASE}/api/live-polls`, { signal: AbortSignal.timeout(7000) });
+      return r.ok ? await r.json() : null;
+    });
+    if (j && j.ok && Array.isArray(j.polls)) {
+      const seen = new Set(base.map(p => `${p.date}|${p.pollster}`));
+      live = j.polls.filter(p => p.figures && p.figures.length && !seen.has(`${p.date}|${p.pollster}`))
+        .map(p => ({ ...p, live: true }));
+    }
+  } catch (e) { /* נופלים למאגר הידני */ }
+  return [...live, ...base].sort((a, b) => String(b.date).localeCompare(String(a.date)));
 }
 
 function pollsBlocked(meta) {
@@ -208,15 +231,38 @@ ${F.map(f => `<div class="card"><h3>${esc(f.q)}</h3><p style="margin:0">${esc(f.
   },
   // מיפוי נושא → מפתח העמדה בקובץ המפלגות (חלק מהנושאים מפוצלים לשני צירים)
   async party(host, id) {
-    const d = await loadData(host, ['parties', 'statements', 'issues', 'polls']);
+    const d = await loadData(host, ['parties', 'statements', 'issues', 'polls', 'budget', 'meta']);
     const P = d.parties || [];
     const p = P.find(x => x.id === id);
     if (!p) return null;
     const sts = (d.statements && d.statements.statements) || [];
     const scale = (d.statements && d.statements.scale && d.statements.scale.label) || {};
     const merged = p.runs2026 === false ? P.find(x => x.id === p.mergedInto) : null;
-    const poll = ((d.polls && d.polls.polls) || []).find(x => x.figures && x.figures.length);
+    const polls = await allPolls(d);
+    const poll = polls[0];
     const pollFig = poll && poll.figures.find(f => f.partyId === p.id);
+
+    // מגמה בסקרים: כל נקודה נגזרת מסקר קיים במאגר, עם מכון ותאריך — ניתן לאימות.
+    const trend = polls.map(pl => {
+      const f = pl.figures.find(x => x.partyId === p.id);
+      return f ? { date: pl.date, pollster: pl.pollster, seats: f.seats, url: pl.sourceUrl } : null;
+    }).filter(Boolean);
+    const trendRows = trend.map(t => `<tr><td style="white-space:nowrap">${esc(heDate(t.date))}</td><td>${t.url ? `<a href="${esc(t.url)}" target="_blank" rel="noopener nofollow">${esc(t.pollster)}</a>` : esc(t.pollster)}</td><td style="font-weight:700;width:60px">${t.seats}</td></tr>`).join('');
+    let trendNote = '';
+    if (trend.length >= 2) {
+      const diff = trend[0].seats - trend[trend.length - 1].seats;
+      const dir = diff > 0 ? `עלייה של ${diff} מנדטים` : (diff < 0 ? `ירידה של ${Math.abs(diff)} מנדטים` : 'ללא שינוי');
+      trendNote = `<p>בין הסקר הישן ביותר במאגר (${esc(heDate(trend[trend.length - 1].date))}) לחדש ביותר (${esc(heDate(trend[0].date))}) נרשמה <strong>${dir}</strong>. סקרים תנודתיים ומשתנים בין המכונים — זו תמונת מצב, לא תחזית.</p>`;
+    }
+
+    // סדרי עדיפויות תקציביים — מתוך budget.partyBudget שבמאגר הפתוח.
+    const B = d.budget || {}; const cats = {}; (B.categories || []).forEach(c => cats[c.id] = c.name);
+    const prefs = (B.partyBudget || {})[p.id] || {};
+    const up = Object.keys(prefs).filter(k => prefs[k] > 0 && cats[k]).map(k => cats[k]);
+    const down = Object.keys(prefs).filter(k => prefs[k] < 0 && cats[k]).map(k => cats[k]);
+
+    // מפלגות נוספות באותו גוש — נגזר ישירות משדה bloc שבמאגר.
+    const peers = P.filter(x => x.id !== p.id && x.bloc === p.bloc && x.runs2026 !== false);
     const rows = sts.map(s => {
       const v = p.positions ? p.positions[s.id] : null;
       return v == null ? '' : `<tr><td>${esc(s.text)}</td><td style="white-space:nowrap">${esc(scale[String(v)] || '—')}</td></tr>`;
@@ -242,6 +288,25 @@ ${rows ? `<h2>עמדות ${esc(p.name)} לפי נושא</h2>
 <p>העמדות להלן הן <strong>סיכום מתומצת</strong> ממקורות פומביים (מצעים, הצהרות והצבעות) — לא ציטוט רשמי של המפלגה. הן נועדו להשוואה מהירה, ואינן תחליף לקריאת המצע המלא.</p>
 <div class="tw"><table><thead><tr><th>הנושא</th><th>העמדה</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
 ${cands ? `<h2>דמויות מרכזיות ברשימה</h2><p>נציגים בולטים נכון להיום. רשימות 2026 טרם נסגרו רשמית.</p><div class="grid">${cands}</div>` : ''}
+
+<h2>${esc(p.name)} בסקרים</h2>
+${trend.length ? `<p>כל שורה היא סקר שנמצא במאגר, עם קישור לפרסום המקורי כדי שתוכלו לאמת בעצמכם.</p>
+<div class="tw"><table><thead><tr><th>תאריך</th><th>מכון / פרסום</th><th>מנדטים</th></tr></thead><tbody>${trendRows}</tbody></table></div>
+${trendNote}`
+        : `<div class="note">${esc(p.name)} אינה מופיעה בסקרים שבמאגר. ${p.seats > 0 ? 'רשימה שנמדדת מתחת לאחוז החסימה (3.25%) אינה מקבלת מנדטים, ולכן לרוב אינה מוצגת בפירוט הסקר.' : 'רשימות חדשות אינן נמדדות בכל סקר.'}</div>`}
+
+${(up.length || down.length) ? `<h2>סדרי עדיפויות תקציביים</h2>
+<p>לפי סיכום העדפות התקציב שבמאגר, אלה התחומים שבהם עמדת ${esc(p.name)} נוטה להגדלה או לקיצוץ ביחס לתקציב הקיים:</p>
+<div class="tw"><table><tbody>
+${up.length ? `<tr><th style="width:110px">להגדיל</th><td>${up.map(esc).join(' · ')}</td></tr>` : ''}
+${down.length ? `<tr><th style="width:110px">לקצץ</th><td>${down.map(esc).join(' · ')}</td></tr>` : ''}
+</tbody></table></div>
+<p>זהו <strong>סיכום מתומצת</strong> ממקורות פומביים ולא מצע תקציבי רשמי. אפשר לבחון את ההיגיון בעצמכם ב<a href="${BASE}/#/budget">סימולטור התקציב</a>: מחלקים את תקציב המדינה בשקלים אמיתיים, ובסוף רואים איזו מפלגה הכי קרובה לתקציב שבניתם.</p>` : ''}
+
+${peers.length ? `<h2>מפלגות נוספות בגוש ${esc(p.bloc)}</h2>
+<p>שיוך הגוש אינו הצהרה על שיתוף פעולה — הוא מציין קרבה עמדתית כפי שהיא מסומנת במאגר.</p>
+<div class="more">${peers.map(x => `<a href="${BASE}/guide/party/${esc(x.id)}">${esc(x.name)}${x.ballot ? ` (${esc(x.ballot)})` : ''}</a>`).join('')}</div>` : ''}
+
 <h2>האם ${esc(p.name)} מתאימה לכם?</h2>
 <p>במקום להסתמך על תווית, <a href="${BASE}/#/quiz">שאלון ההתאמה</a> משווה את עמדותיכם מול כל המפלגות ומראה אחוזי התאמה. אנונימי לחלוטין — התשובות מעובדות בדפדפן ואינן נשלחות לשום שרת.</p>
 <h2>מפלגות נוספות</h2>
@@ -263,12 +328,48 @@ ${cands ? `<h2>דמויות מרכזיות ברשימה</h2><p>נציגים בו
     const sts = ((d.statements && d.statements.statements) || []).filter(s => s.explainer === key);
     const scale = (d.statements && d.statements.scale && d.statements.scale.label) || {};
     const active = P.filter(x => x.runs2026 !== false);
+    // לכל אמירה: טבלה מלאה + קיבוץ לפי עמדה. שני התצוגות נגזרות מאותם ערכים
+    // שבמאגר — הקיבוץ הוא ארגון שונה של אותו נתון, לא נתון חדש.
     const tables = sts.map(s => {
-      const rows = active.map(x => {
-        const v = x.positions ? x.positions[s.id] : null;
-        return v == null ? '' : `<tr><td><a href="${BASE}/guide/party/${esc(x.id)}">${esc(x.name)}</a></td><td style="white-space:nowrap">${esc(scale[String(v)] || '—')}</td></tr>`;
+      const withVal = active.map(x => ({ x, v: x.positions ? x.positions[s.id] : null })).filter(r => r.v != null);
+      if (!withVal.length) return '';
+      const rows = withVal.map(r => `<tr><td><a href="${BASE}/guide/party/${esc(r.x.id)}">${esc(r.x.name)}</a></td><td style="white-space:nowrap">${esc(scale[String(r.v)] || '—')}</td></tr>`).join('');
+      const group = (pred, label) => {
+        const g = withVal.filter(r => pred(r.v));
+        return g.length ? `<tr><th style="width:130px">${label}</th><td>${g.map(r => `<a href="${BASE}/guide/party/${esc(r.x.id)}">${esc(r.x.name)}</a>`).join(' · ')}</td></tr>` : '';
+      };
+      const summary = `<div class="tw"><table><tbody>
+${group(v => v > 0, 'תומכות')}
+${group(v => v === 0, 'ניטרליות / תלוי')}
+${group(v => v < 0, 'מתנגדות')}
+</tbody></table></div>`;
+      const counts = { for: withVal.filter(r => r.v > 0).length, mid: withVal.filter(r => r.v === 0).length, against: withVal.filter(r => r.v < 0).length };
+      // פילוח לפי גוש: נגזר משדה bloc ומאותם ערכי עמדות. מראה אם הנושא מפצל
+      // גוש מבפנים או שהוא קו מפריד בין גושים.
+      const blocs = [...new Set(withVal.map(r => r.x.bloc))];
+      const blocRows = blocs.map(b => {
+        const g = withVal.filter(r => r.x.bloc === b);
+        const f = g.filter(r => r.v > 0).length, a = g.filter(r => r.v < 0).length, m = g.length - f - a;
+        const parts = [];
+        if (f) parts.push(`${f} תומכות`);
+        if (a) parts.push(`${a} מתנגדות`);
+        if (m) parts.push(`${m} ניטרליות`);
+        const split = f > 0 && a > 0 ? ' <em>(הגוש חלוק)</em>' : '';
+        return `<tr><th style="width:110px">${esc(b)}</th><td>${parts.join(' · ')}${split}</td></tr>`;
       }).join('');
-      return rows ? `<h3 style="margin-top:20px">${esc(s.text)}</h3><div class="tw"><table><thead><tr><th>מפלגה</th><th>עמדה</th></tr></thead><tbody>${rows}</tbody></table></div>` : '';
+      const dividedBlocs = blocs.filter(b => {
+        const g = withVal.filter(r => r.x.bloc === b);
+        return g.some(r => r.v > 0) && g.some(r => r.v < 0);
+      });
+      return `<h3 style="margin-top:22px">${esc(s.text)}</h3>
+${summary}
+<p style="font-size:.9rem">מתוך ${withVal.length} הרשימות המתמודדות שיש להן עמדה מוגדרת בנושא: <strong>${counts.for}</strong> תומכות, <strong>${counts.against}</strong> מתנגדות${counts.mid ? `, ו־<strong>${counts.mid}</strong> ניטרליות או תלויות בהקשר` : ''}.</p>
+<h4 style="font-family:Heebo;font-size:.95rem;margin:14px 0 6px">איך זה מתפלג בין הגושים</h4>
+<div class="tw"><table><tbody>${blocRows}</tbody></table></div>
+<p style="font-size:.9rem">${dividedBlocs.length
+          ? `הנושא הזה <strong>מפצל מבפנים</strong> את ${dividedBlocs.map(esc).join(' ו')} — כלומר הוא אינו נחתך בדיוק לפי קווי הגושים המקובלים.`
+          : `בנושא הזה כל גוש מצביע באופן אחיד, כלומר הוא נחתך לפי קווי הגושים המקובלים.`}</p>
+<details class="faq"><summary>הפירוט המלא לפי עוצמת העמדה</summary><div class="tw"><table><thead><tr><th>מפלגה</th><th>עמדה</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
     }).join('');
     const otherIssues = I.filter(x => (x.explainer || x.id) !== key);
     return {
