@@ -92,6 +92,7 @@ footer a{color:var(--ink-3);margin-inline-end:14px}
 <div class="wrap">
 ${body}
 <div class="more">
+  <a href="${BASE}/guide/quiz">שאלון ההתאמה</a>
   <a href="${BASE}/guide/parties">כל המפלגות</a>
   <a href="${BASE}/guide/polls">סקרים אחרונים</a>
   <a href="${BASE}/guide/issues">נושאי הבחירות</a>
@@ -293,6 +294,66 @@ ${e.source && e.source.url ? `<div class="note">מקור לרקע העובדתי
         '@context': 'https://schema.org', '@type': 'Article', headline: e.title,
         description: e.fact ? String(e.fact).slice(0, 200) : '', inLanguage: 'he',
         publisher: { '@type': 'Organization', name: 'מצפן הבוחר' }
+      }
+    };
+  },
+  async quiz(host) {
+    const d = await loadData(host, ['statements', 'parties', 'issues', 'meta']);
+    const sts = (d.statements && d.statements.statements) || [];
+    const axes = (d.statements && d.statements.axes) || {};
+    const active = (d.parties || []).filter(p => p.runs2026 !== false);
+    const topics = [...new Set(sts.map(s => s.topic).filter(Boolean))];
+    const issueLink = id => {
+      const it = (d.issues || []).find(x => x.explainer === id);
+      return it ? `${BASE}/guide/issue/${id}` : null;
+    };
+    return {
+      title: 'שאלון בחירות 2026 — מצפן פוליטי: לאיזו מפלגה אתם מתאימים | מצפן הבוחר',
+      desc: `שאלון התאמה חינמי ואנונימי לבחירות לכנסת ה-26: ${sts.length} אמירות על נושאי הליבה, ובסופן אחוזי ההתאמה שלכם לכל ${active.length} הרשימות ומיקומכם על המפה הפוליטית. התשובות מעובדות בדפדפן ולא נשלחות לשום שרת.`,
+      path: '/guide/quiz',
+      body: `<h1>שאלון הבחירות: לאיזו מפלגה אתם באמת מתאימים?</h1>
+<p class="lead">מצפן פוליטי חינמי לקראת הבחירות לכנסת ה-26. עונים על ${sts.length} אמירות בנושאי הליבה, ומקבלים את אחוזי ההתאמה שלכם לכל ${active.length} הרשימות המתמודדות — לצד מיקומכם על מפה פוליטית דו-ממדית. לוקח כשלוש דקות.</p>
+<div class="more"><a href="${BASE}/#/quiz" style="background:var(--accent);color:#fff;border-color:var(--accent)">התחילו את השאלון ←</a></div>
+
+<h2>מה שואלים אתכם</h2>
+<p>לכל אמירה בוחרים עד כמה אתם מסכימים (מ"מתנגד מאוד" עד "מסכים מאוד"), ואפשר גם לסמן שנושא חשוב לכם במיוחד — אז הוא מקבל משקל כפול. אלה הנושאים:</p>
+<div class="tw"><table><thead><tr><th>הנושא</th><th>האמירה שתתבקשו לדרג</th></tr></thead><tbody>
+${sts.map(s => {
+        const l = issueLink(s.explainer);
+        return `<tr><td style="white-space:nowrap">${l ? `<a href="${l}">${esc(s.topic)}</a>` : esc(s.topic)}</td><td>${esc(s.text)}</td></tr>`;
+      }).join('')}
+</tbody></table></div>
+
+<h2>איך מחושבת ההתאמה</h2>
+<p>לכל מפלגה מוגדרת עמדה בכל אחד מהנושאים, בסולם זהה לשלכם. ההתאמה נמדדת לפי המרחק בין התשובה שלכם לעמדת המפלגה בכל נושא: ככל שהמרחק קטן יותר, ההתאמה גבוהה יותר. נושא שסימנתם כחשוב נספר פעמיים. נושא שדילגתם עליו, או שסימנתם בו <strong>"עדיין לומד את הנושא"</strong> — לא נספר כלל, ובמקום זאת תקבלו דוח נקודות עיוורות שמראה איפה כדאי להעמיק.</p>
+<div class="note">התוצאה היא <strong>מראה, לא המלצה</strong>. היא מראה היכן עמדותיכם מתיישבות עם עמדות המפלגות — לא למי כדאי לכם להצביע. עמדות המפלגות הן סיכום מתומצת ממקורות פומביים, ולא ציטוט רשמי.</div>
+
+${axes.bloc && axes.relig ? `<h2>המפה הפוליטית</h2>
+<p>בנוסף לאחוזי ההתאמה, תראו את עצמכם על מפה בשני צירים: <strong>${esc(axes.bloc.label)}</strong> (${esc(axes.bloc.negLabel)} מול ${esc(axes.bloc.posLabel)}) ו<strong>${esc(axes.relig.label)}</strong> (${esc(axes.relig.negLabel)} מול ${esc(axes.relig.posLabel)}). כך אפשר לראות לא רק עם מי אתם מסכימים, אלא גם היכן אתם ממוקמים ביחס לכלל המפה.</p>` : ''}
+
+<h2>פרטיות מלאה</h2>
+<ul>
+  <li><strong>אין הרשמה ואין חשבון</strong> — לא נדרש שם, אימייל או כל פרט מזהה.</li>
+  <li><strong>התשובות לא נשלחות לשום שרת</strong> — כל החישוב מתבצע בדפדפן שלכם, והתשובות נמחקות ברענון העמוד.</li>
+  <li><strong>אין עוגיות מעקב ואין פרסום.</strong> <a href="${BASE}/#/privacy">מדיניות הפרטיות המלאה</a>.</li>
+</ul>
+
+<h2>למה אפשר לסמוך על התוצאה</h2>
+<p>כל עמדה במאגר מלווה במקור, וכל נושא מוצג עם הטיעון החזק של שני הצדדים — בלי צביעה של "טוב מול רע". מנגנון בדיקה עצמאי רץ על הנתונים בכל ביקור ומוודא שהם שלמים, מתוארכים ומנוסחים בשפה ניטרלית. <a href="${BASE}/guide/trust">כך זה עובד</a>, והנתונים עצמם <a href="${BASE}/#/database">פתוחים לעיון ולהורדה</a>.</p>
+
+<h2>לפני שעונים — כדאי להבין</h2>
+<p>אם חלק מהנושאים לא מוכרים לכם, זה בסדר גמור. לכל נושא יש <a href="${BASE}/guide/issues">עמוד הסבר ניטרלי</a> עם העובדות והמחלוקת, ויש גם <a href="${BASE}/guide/glossary">מילון מונחים</a> שמסביר מנדט, אחוז חסימה ושאר המושגים.</p>
+<div class="more"><a href="${BASE}/#/quiz" style="background:var(--accent);color:#fff;border-color:var(--accent)">לשאלון ←</a><a href="${BASE}/guide/parties">כל המפלגות</a><a href="${BASE}/guide/issues">הנושאים</a></div>`,
+      schema: {
+        '@context': 'https://schema.org', '@type': 'HowTo',
+        name: 'שאלון התאמה למפלגות בבחירות לכנסת ה-26',
+        description: `שאלון אנונימי בן ${sts.length} אמירות שמראה לאיזו מפלגה עמדותיכם מתאימות`,
+        totalTime: 'PT3M', inLanguage: 'he',
+        step: [
+          { '@type': 'HowToStep', name: 'דרגו את האמירות', text: `עונים על ${sts.length} אמירות בנושאי הליבה, מ"מתנגד מאוד" עד "מסכים מאוד".` },
+          { '@type': 'HowToStep', name: 'סמנו מה חשוב לכם', text: 'נושא שמסומן כחשוב מקבל משקל כפול בחישוב.' },
+          { '@type': 'HowToStep', name: 'קבלו את התוצאה', text: 'אחוזי התאמה לכל רשימה, ומיקומכם על המפה הפוליטית.' }
+        ]
       }
     };
   },

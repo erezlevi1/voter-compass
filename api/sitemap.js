@@ -7,6 +7,7 @@ const BASE = 'https://voter-compass.vercel.app';
 
 const STATIC_PAGES = [
   { path: '/', changefreq: 'daily', priority: '1.0' },
+  { path: '/guide/quiz', changefreq: 'weekly', priority: '0.9' },
   { path: '/guide/parties', changefreq: 'weekly', priority: '0.9' },
   { path: '/guide/polls', changefreq: 'daily', priority: '0.9' },
   { path: '/guide/issues', changefreq: 'weekly', priority: '0.8' },
