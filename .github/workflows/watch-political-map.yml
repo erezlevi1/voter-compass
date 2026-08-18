@@ -32,10 +32,23 @@ jobs:
               state: 'open', labels: 'map-drift'
             });
             if (open.data.length) {
-              await github.rest.issues.createComment({
+              const issue = open.data[0];
+              // מגיבים רק כשהממצא השתנה. בלי זה נוצרת תגובה יומית זהה,
+              // וההתראה נעשית רעש שמתעלמים ממנו.
+              const prev = await github.rest.issues.listComments({
                 owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: open.data[0].number, body
+                issue_number: issue.number, per_page: 100
               });
+              const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
+              const last = prev.data.length ? prev.data[prev.data.length - 1].body : issue.body;
+              if (norm(last) === norm(body)) {
+                core.info('הממצא זהה לקודם — לא מגיבים שוב.');
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: issue.number, body
+                });
+              }
             } else {
               await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,
