@@ -1,7 +1,12 @@
 {
   "note": "לכל סקר מצורף קישור לפרסום המקורי, שבו מפורטת המתודולוגיה המלאה (מזמין הסקר, גודל המדגם, טעות הדגימה ונוסח השאלות) כנדרש בחוק. הסקרים תנודתיים ומשתנים בין מכוני הסקרים; מפלגות מתחת לאחוז החסימה אינן נספרות במנדטים. סקר הוא תמונת מצב ולא תחזית.",
-  "livePollsFeasibility":"סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה (Opinion polling for the 2026 Israeli legislative election) דרך שער אימות אוטומטי; המאגר הידני כאן הוא הבסיס המאומת, וכל סקר חי מסומן ככזה.",
+  "livePollsFeasibility":"סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה (Opinion polling for the 2026 Israeli legislative election) דרך שער אימות אוטומטי, ומסומנים בתג 'חי'. המאגר הידני כאן הוא הבסיס המאומת. שימו לב: עמוד ויקיפדיה מתוחזק בהתנדבות ולעיתים מפגר אחרי הפרסום בתקשורת — לכן סקרים בולטים מתווספים גם ידנית, עם קישור לפרסום המקורי.",
   "polls":[
+    {
+      "date":"2026-08-13","pollster":"i24NEWS (Direct Polls)","sourceUrl":"https://www.i24news.tv/he/news/israel-elections-2026/polls/artc-26c56d10",
+      "summary":"הליכוד מזנקת ל‑30 לקראת הפריימריז; יש\"ר של אייזנקוט שומרת על 23. מדגם 512, טעות דגימה ±4.2%.",
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":30},{"partyId":"yashar","party":"יש\"ר","seats":23},{"partyId":"democrats","party":"הדמוקרטים","seats":10},{"partyId":"beytenu","party":"ישראל ביתנו","seats":9},{"partyId":"utj","party":"יהדות התורה","seats":9},{"partyId":"shas","party":"ש\"ס","seats":8},{"partyId":"bennett","party":"ביחד (בנט)","seats":8},{"partyId":"otzma","party":"עוצמה יהודית","seats":7},{"partyId":"hadash","party":"חד\"ש-תע\"ל","seats":6},{"partyId":"tzionut","party":"הציונות הדתית","seats":5},{"partyId":"raam","party":"רע\"ם","seats":5}]
+    },
     {
       "date":"2026-06-30","pollster":"i24NEWS (Direct Polls)","sourceUrl":"https://www.i24news.tv/he/news/opinion-and-analysis/artc-ba3647eb",
       "summary":"זינוק לליכוד; יש\"ר של איזנקוט במקום השני; ביחד של בנט צונחת. חד\"ש-תע\"ל ובל\"ד נמדדו יחד.",

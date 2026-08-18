@@ -1462,7 +1462,10 @@ function dataAge(){
 function mapDriftSignal(){
   const win=recentPollWindow(3); if(win.length<2)return null;
   const seen=new Set(); win.forEach(p=>p.figures.forEach(f=>f.partyId&&seen.add(f.partyId)));
-  const missing=activeParties().filter(p=>!seen.has(p.id)&&p.seats>0);
+  // היעדרות שכבר מוסברת במאגר (למשל רשימה שידוע שהיא מתחת לאחוז החסימה) אינה
+  // "שינוי לא מוסבר" — התרעה עליה בכל עמוד הופכת את הבאנר לרעש קבוע.
+  const explained=p=>/אחוז החסימה|מתחת לאחוז/.test(p.status2026||'');
+  const missing=activeParties().filter(p=>!seen.has(p.id)&&p.seats>0&&!explained(p));
   return missing.length?missing.map(p=>p.name):null;
 }
 function freshnessBanner(){
