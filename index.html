@@ -194,6 +194,7 @@ main{flex:1}
 /* סקלת עמדות נייטרלית: כחול↔אפור↔ענבר (בלי קידוד טוב/רע) */
 .sp2{background:#2c5f8a;color:#fff}.sp1{background:#d4e3ef;color:#1f4566}.sp0{background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line)}
 .spn1{background:#efe1c5;color:#785a1c}.spn2{background:#9a6a1e;color:#fff}
+.sp-na{background:transparent;color:var(--ink-3);border:1px dashed var(--line-2);font-weight:600}
 [data-theme="dark"] .sp1{background:#1d2e3e;color:#a9cde8}[data-theme="dark"] .spn1{background:#332a18;color:#e0c489}
 
 /* QUIZ */
@@ -229,6 +230,7 @@ main{flex:1}
 .match-row .nm .pct{font-family:var(--serif);font-weight:900;color:var(--accent)}
 .match-row .track{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:6px}
 .match-row .track i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:right;transition:transform .9s var(--t-slow)}
+.match-row .cov-note{font-size:.74rem;color:var(--ink-3);margin-top:4px}
 .compass-card{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
 .compass-card h4{font-family:var(--serif);font-size:1.2rem;margin-bottom:4px}
 .compass-card p{font-size:.85rem;color:var(--ink-3);margin-bottom:14px}
@@ -269,6 +271,9 @@ main{flex:1}
 .pbar .track{flex:1;height:22px;border-radius:7px;background:var(--surface-2);overflow:hidden;position:relative}
 .pbar .track i{display:block;height:100%;border-radius:7px}
 .pbar .val{width:34px;flex:0 0 auto;font-family:var(--serif);font-weight:900;font-size:1.05rem;text-align:start}
+.pbar-na{opacity:.65}
+.pbar-na .nm{color:var(--ink-3)}
+.pbar-na .na-note{flex:1;font-size:.78rem;color:var(--ink-3);font-style:italic}
 .poll a.src-link{font-size:.84rem;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px;margin-top:8px}
 
 /* TICKER (פס חדשות רץ) */
@@ -903,6 +908,7 @@ function viewParty(m){
   if(!p) return {html:`<div class="page"><div class="wrap"><a href="#/parties" class="breadcrumb">${chevBack()} כל המפלגות</a><div class="empty">המפלגה לא נמצאה.</div></div></div>`};
   const stances=DATA.statements.statements.map(st=>{
     const v=p.positions[st.id];
+    if(v==null) return `<div class="stance-row"><span class="q">${esc(st.text)}</span><span class="stance-pill sp-na">עמדה טרם פורסמה</span></div>`;
     return `<div class="stance-row"><span class="q">${esc(st.text)}</span><span class="stance-pill ${SP[v]}">${esc(stanceLabel(v))}</span></div>`;
   }).join('');
   const cands=(p.candidates||[]).map(c=>`
@@ -1017,11 +1023,12 @@ function renderQuizBody(){
 function setProgress(frac){const el=document.getElementById('quiz-progress');if(el)el.style.transform='scaleX('+frac+')'}
 function computeMatches(){
   return activeParties().map(p=>{
-    let score=0,max=0;
-    quiz.answers.forEach((a,i)=>{ if(a.val==null)return; const w=a.important?2:1;
+    let score=0,max=0,answeredN=0,coveredN=0;
+    quiz.answers.forEach((a,i)=>{ if(a.val==null)return; answeredN++; const w=a.important?2:1;
       const pv=p.positions[DATA.statements.statements[i].id];
-      score+=w*(1-Math.abs(a.val-pv)/4); max+=w; });
-    return {p,pct:max>0?Math.round(score/max*100):0};
+      if(pv==null)return; // אין עמדה מתועדת למפלגה זו בנושא זה — לא נספר בציון ההתאמה שלה, ולא כנייטרלי
+      coveredN++; score+=w*(1-Math.abs(a.val-pv)/4); max+=w; });
+    return {p,pct:max>0?Math.round(score/max*100):0,answeredN,coveredN};
   }).sort((x,y)=>y.pct-x.pct);
 }
 function renderResults(){
@@ -1051,7 +1058,9 @@ function renderResults(){
   document.getElementById('match-list').innerHTML=matches.map((mt,i)=>`
     <div class="match-row"><div class="badge" style="background:${mt.p.color}">${esc(mt.p.abbr)}</div>
       <div class="info"><div class="nm"><span>${esc(mt.p.name)}${i===0?' · ההתאמה הגבוהה ביותר':''}</span><span class="pct">${mt.pct}%</span></div>
-        <div class="track"><i style="background:${mt.p.color}" data-w="${mt.pct}"></i></div></div></div>`).join('');
+        <div class="track"><i style="background:${mt.p.color}" data-w="${mt.pct}"></i></div>
+        ${mt.answeredN>0&&mt.coveredN<mt.answeredN?`<div class="cov-note">מבוסס על ${mt.coveredN} מתוך ${mt.answeredN} הנושאים שענית עליהם; ל${esc(mt.p.name)} אין עדיין עמדה מתועדת בשאר.</div>`:''}
+      </div></div>`).join('');
   drawCompass();
   requestAnimationFrame(()=>document.querySelectorAll('#match-list .track i').forEach(i=>i.style.transform='scaleX('+(i.dataset.w/100)+')'));
   document.getElementById('q-restart').addEventListener('click',()=>{quiz=null;initQuiz();renderQuizBody()});
@@ -1084,7 +1093,15 @@ function pollCardsHtml(){
   const maxSeats=Math.max(1,...polls.flatMap(p=>(p.figures||[]).map(f=>f.seats)));
   const colorOf=f=>{const byId=f.partyId&&DATA.parties.find(x=>x.id===f.partyId);if(byId)return byId.color;const name=f.party||'';const p=DATA.parties.find(x=>name.includes(x.name)||x.name.includes(name.replace(/\s*\(.+\)/,'')));return p?p.color:'var(--accent)'};
   const nameOf=f=>{if(f.party)return f.party;const p=f.partyId&&DATA.parties.find(x=>x.id===f.partyId);return p?p.name:'';};
-  return polls.map(pl=>`
+  // מפלגה שרצה ב‑2026 (יש לה כרטיס אצלנו) אך נעדרת משורת הסקר הזו (למשל: מתחת לאחוז החסימה
+  // באותו סקר ספציפי) — לא מוסרת בשקט, אלא מוצגת עם ציון מפורש שהיא לא נכללה בסקר הזה.
+  const missingActiveFor=pl=>{
+    if(!(pl.figures||[]).length) return [];
+    return activeParties().filter(p=>!pl.figures.some(f=>f.partyId===p.id));
+  };
+  return polls.map(pl=>{
+    const missing=missingActiveFor(pl);
+    return `
     <div class="poll">
       <div class="poll-hd"><span class="pollster">${esc(pl.pollster)}${pl.live?' <span class="live-tag">חי · עבר אימות</span>':''}</span><span class="date">${esc(pl.date)}</span></div>
       ${pl.summary?`<div class="summary">${esc(pl.summary)}</div>`:''}
@@ -1092,8 +1109,13 @@ function pollCardsHtml(){
         <div class="pbar"><span class="nm">${esc(nameOf(f))}</span>
           <span class="track"><i style="width:${Math.round(f.seats/maxSeats*100)}%;background:${colorOf(f)}"></i></span>
           <span class="val">${f.seats}</span></div>`).join(''):'<div style="font-size:.85rem;color:var(--ink-3)">פרטי הסקר המלא בקישור.</div>'}
+      ${missing.map(p=>{
+        const ni=(pl.notIncluded||[]).find(x=>x.partyId===p.id);
+        const pctNote=ni&&ni.pct!=null?` (${ni.pct}%)`:'';
+        return `<div class="pbar pbar-na"><span class="nm">${esc(p.name)}</span><span class="na-note">המפלגה לא נכללה בסקר הנוכחי${pctNote}</span></div>`;
+      }).join('')}
       <a class="src-link" href="${esc(pl.sourceUrl)}" target="_blank" rel="noopener noreferrer">לסקר המלא ${chev()}</a>
-    </div>`).join('');
+    </div>`;}).join('');
 }
 function viewNews(){
   const html=`<div class="ticker" id="ticker" aria-label="פס מבזקי חדשות"></div><div class="page"><div class="wrap">
@@ -1423,14 +1445,17 @@ function runAudit(){
   const exSrc=exIds.filter(k=>DATA.explainers[k].source&&DATA.explainers[k].source.url).length;
   add('ex-src','מקור לכל הסבר נושא', exSrc===exIds.length?'pass':'warn', `${exSrc} מתוך ${exIds.length} ההסברים כוללים מקור מצוטט.`);
   add('meta-src','מקורות‑על רשמיים מתועדים', (DATA.meta.sources||[]).length>=3?'pass':'warn', `${(DATA.meta.sources||[]).length} מקורות רשמיים מתועדים במאגר.`);
-  const partiesComplete=DATA.parties.every(p=>sts.every(s=>typeof p.positions[s.id]==='number'));
-  add('party-pos','עמדה מלאה לכל מפלגה בכל נושא', partiesComplete?'pass':'fail', partiesComplete?`כל ${DATA.parties.length} המפלגות עם עמדה מוגדרת בכל ${sts.length} הנושאים.`:'נמצאו עמדות חסרות.');
+  const undeclaredGaps=[]; DATA.parties.forEach(p=>{const declared=new Set(p.positionsIncomplete||[]); sts.forEach(s=>{if(typeof p.positions[s.id]!=='number'&&!declared.has(s.id))undeclaredGaps.push(p.name+'/'+s.id);});});
+  add('party-pos','עמדה מלאה לכל מפלגה בכל נושא (או תיעוד מפורש של חוסר)', undeclaredGaps.length?'fail':'pass', undeclaredGaps.length?`נמצאו עמדות חסרות ולא מתועדות: ${undeclaredGaps.join(', ')}.`:`כל ${DATA.parties.length} המפלגות עם עמדה מוגדרת, או תיעוד מפורש של חוסר עמדה, בכל ${sts.length} הנושאים.`);
+  const declaredGapParties=DATA.parties.filter(p=>(p.positionsIncomplete||[]).length);
+  if(declaredGapParties.length) add('party-pos-gaps','מפלגות עם עמדות שטרם פורסמו בנושאים מסוימים','warn',
+    declaredGapParties.map(p=>`${p.name}: ${p.positionsIncomplete.map(id=>{const s=sts.find(x=>x.id===id);return s?s.topic:id;}).join(', ')}`).join(' · '));
   add('party-pos-src','עמדות המפלגות: רמת אימות','warn','עמדות המפלגות הן סיכום מתומצת מפלטפורמות פומביות, ולא ציטוט מילולי רשמי. מומלץ להצליב מול תוכנית המפלגה הרשמית.');
   const stEx=sts.every(s=>DATA.explainers[s.explainer]);
   add('st-ex','הסבר ניטרלי לכל שאלה בשאלון', stEx?'pass':'fail', stEx?'לכל שאלה מקושר עמוד הסבר קיים.':'נמצאה שאלה ללא הסבר.');
   const exComplete=exIds.every(k=>{const e=DATA.explainers[k];return e.fact&&e.dispute&&e.for&&e.against;});
   add('ex-complete','כל הסבר כולל עובדה + מחלוקת + שני הצדדים', exComplete?'pass':'fail', exComplete?'מבנה דו‑צדדי מלא (steelman) בכל ההסברים.':'נמצא הסבר חסר רכיב.');
-  const posRange=DATA.parties.every(p=>sts.every(s=>p.positions[s.id]>=-2&&p.positions[s.id]<=2));
+  const posRange=DATA.parties.every(p=>sts.every(s=>{const v=p.positions[s.id]; return v==null||(v>=-2&&v<=2);}));
   add('pos-range','ערכי עמדות בטווח התקין', posRange?'pass':'fail','כל ערכי העמדות בין ‎-2‎ ל‎+2.');
   const bSum=DATA.budget.categories.reduce((a,c)=>a+c.start,0);
   add('budget-sum','התקציב ההתחלתי מאוזן ל‑100%', bSum===100?'pass':'fail', `סכום קטגוריות התקציב: ${bSum}% (כ‑${DATA.budget.totalNis} מיליארד ₪).`);
@@ -1826,7 +1851,7 @@ function ansNeedIssue(ent){const p=DATA.parties.find(x=>x.id===ent.party),nm=p?p
 function compareParties(ids,issue,qn){
   const ps=ids.slice(0,3).map(id=>DATA.parties.find(p=>p.id===id)).filter(Boolean);
   if(ps.length<2) return ps.length?ansPartyInfo({party:ps[0].id}):{found:false,title:'לא נמצא',answer:'לא זוהו שתי מפלגות להשוואה.',suggestions:QA_SUGGEST};
-  if(issue){const key=posKeyFor(issue,qn),iss=DATA.issues.find(i=>i.explainer===issue);return {found:true,title:'השוואת עמדות',answer:`בנושא ${iss?iss.title:''} — ${ps.map(p=>p.name+': '+stanceLabel(p.positions[key])).join(' · ')}.`,sourceLabel:'מפלגות ← עמדות',route:'#/parties'};}
+  if(issue){const key=posKeyFor(issue,qn),iss=DATA.issues.find(i=>i.explainer===issue);return {found:true,title:'השוואת עמדות',answer:`בנושא ${iss?iss.title:''} — ${ps.map(p=>p.name+': '+(p.positions[key]==null?'עמדה טרם פורסמה':stanceLabel(p.positions[key]))).join(' · ')}.`,sourceLabel:'מפלגות ← עמדות',route:'#/parties'};}
   // השוואת גודל — פיוס בין שתי תקופות: מובילים עם הסקר העדכני אם קיים לכולן, אחרת בסיס הכנסת ה‑25 עם התרעות
   const poll=latestPoll();
   if(poll&&ps.every(p=>pollSeatsFor(p.id)!=null)){

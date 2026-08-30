@@ -24,10 +24,11 @@ const PARTY_PATTERNS = [
   { re: /^Balad$/,                               id: 'balad',      he: 'בל"ד', outside: true },
   { re: /The Democrats \(Israel\)/,              id: 'democrats',  he: 'הדמוקרטים' },
   { re: /^Yashar/,                               id: 'yashar',     he: 'יש"ר' },
+  { re: /Amcha Yisrael/,                         id: 'amcha',      he: 'עמך ישראל' },
   { re: /Reservists/,                            id: 'reservists', he: 'המילואימניקים', outside: true }
 ];
 // שמות עבריים ידועים לרשימות חדשות שעדיין אינן במאגר המפלגות שלנו (מוצגות כ-excluded)
-const KNOWN_OUTSIDE_HE = { 'Amcha Yisrael': 'עמך ישראל (וינטר)', 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
+const KNOWN_OUTSIDE_HE = { 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
 // עמודות ליבה יציבות שחייבות להופיע כדי שנזהה טבלה כטבלת התוצאות הנוכחית (לא טבלת תרחיש/היסטוריה)
 const REQUIRED_CORE = ['likud', 'bennett', 'tzionut', 'otzma', 'mamlachti', 'shas', 'utj', 'beytenu'];
 
@@ -165,13 +166,18 @@ module.exports = async (req, res) => {
           cursor++;
         }
       }
-      const figures = []; const excluded = [];
+      // מפלגה במאגר שלנו (col.outside===false) שלא עברה אחוז חסימה בסקר הזה ספציפית לא
+      // נעלמת בשקט — מדווחת ב-notIncluded, כדי שהלקוח יציג אותה במפורש כ"לא נכללה בסקר הנוכחי".
+      const figures = []; const excluded = []; const notIncluded = [];
       partyCols.forEach(col => {
         const entry = seatByCol[col.id || col.title];
         const v = entry && entry.cell;
-        if (!v || v.seats == null) return;
-        if (col.outside) excluded.push({ name: col.he, seats: v.seats });
-        else figures.push({ partyId: col.id, party: col.he, seats: v.seats });
+        if (col.outside) {
+          if (v && v.seats != null) excluded.push({ name: col.he, seats: v.seats });
+          return;
+        }
+        if (v && v.seats != null) figures.push({ partyId: col.id, party: col.he, seats: v.seats });
+        else notIncluded.push({ partyId: col.id, party: col.he, pct: (v && v.pct != null) ? v.pct : null });
       });
       combined.forEach(cb => {
         const inside = cb.cols.filter(c => !c.outside);
@@ -188,6 +194,7 @@ module.exports = async (req, res) => {
         sourceUrl: um ? um[1] : PAGE_URL,
         figures,
         excluded,
+        notIncluded,
         sum: figures.reduce((a, f) => a + f.seats, 0) + excluded.reduce((a, f) => a + f.seats, 0)
       });
     }
