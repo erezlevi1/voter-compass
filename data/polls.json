@@ -6,7 +6,7 @@
       "date":"2026-08-27","pollster":"Filber · Channel 14","sourceUrl":"https://www.c14.co.il/article/1681141",
       "summary":"הליכוד מזנקת ל‑31; יש\"ר של אייזנקוט נותרת שנייה עם 23. 'עמך ישראל' של עופר וינטר (רשימה חדשה, הושקה 25.8) עוברת את אחוז החסימה עם 4 מנדטים. 'כחול לבן' (0.4%) לא נכללה בסקר הזה. מדגם 981, טעות דגימה כ‑3.1%.",
       "figures":[{"partyId":"likud","party":"הליכוד","seats":31},{"partyId":"yashar","party":"יש\"ר","seats":23},{"partyId":"shas","party":"ש\"ס","seats":10},{"partyId":"democrats","party":"הדמוקרטים","seats":9},{"partyId":"bennett","party":"ביחד (בנט)","seats":7},{"partyId":"otzma","party":"עוצמה יהודית","seats":7},{"partyId":"utj","party":"יהדות התורה","seats":7},{"partyId":"hadash","party":"חד\"ש-תע\"ל","seats":7},{"partyId":"beytenu","party":"ישראל ביתנו","seats":6},{"partyId":"raam","party":"רע\"ם","seats":5},{"partyId":"tzionut","party":"הציונות הדתית","seats":4},{"partyId":"amcha","party":"עמך ישראל","seats":4}],
-      "notIncluded":[{"partyId":"mamlachti","pct":0.4}]
+      "notIncluded":[{"partyId":"mamlachti","pct":0.4},{"partyId":"beittzioni","pct":1.1}]
     },
     {
       "date":"2026-08-13","pollster":"i24NEWS (Direct Polls)","sourceUrl":"https://www.i24news.tv/he/news/israel-elections-2026/polls/artc-26c56d10",

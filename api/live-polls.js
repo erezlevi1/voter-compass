@@ -25,7 +25,7 @@ const PARTY_PATTERNS = [
   { re: /The Democrats \(Israel\)/,              id: 'democrats',  he: 'הדמוקרטים' },
   { re: /^Yashar/,                               id: 'yashar',     he: 'יש"ר' },
   { re: /Amcha Yisrael/,                         id: 'amcha',      he: 'עמך ישראל' },
-  { re: /Reservists/,                            id: 'reservists', he: 'המילואימניקים', outside: true }
+  { re: /Reservists/,                            id: 'beittzioni', he: 'בית ציוני – המילואימניקים' }
 ];
 // שמות עבריים ידועים לרשימות חדשות שעדיין אינן במאגר המפלגות שלנו (מוצגות כ-excluded)
 const KNOWN_OUTSIDE_HE = { 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
