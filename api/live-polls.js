@@ -7,27 +7,34 @@ const PAGE_URL = 'https://en.wikipedia.org/wiki/' + PAGE;
 const API = 'https://en.wikipedia.org/w/api.php?action=parse&prop=wikitext%7Crevid&format=json&formatversion=2&page=' + PAGE;
 const UA = 'VoterCompassBot/1.0 (+https://voter-compass.vercel.app; public Wikipedia API, polls table only)';
 
-// סדר העמודות בטבלת התוצאות, אומת מול כותרת הטבלה (יולי 2026).
-// אם ויקיפדיה תשנה את מבנה הטבלה — בדיקת הכותרת תיכשל והפונקציה תחזיר שגיאה בטוחה,
-// לא נתונים שגויים. balad/reservists אינן במאגר המפלגות ולכן מדווחות בנפרד (excluded).
-const HEADER_ORDER = ['Likud','Together (Israel)','Religious Zionist Party','Otzma Yehudit','Blue and White (political party)','Shas','United Torah Judaism','Yisrael Beiteinu','Joint List','The Democrats (Israel)','Yashar (political party)','The Reservists (political party)'];
-const COLS = [
-  { id: 'likud',      he: 'הליכוד' },
-  { id: 'bennett',    he: 'ביחד (בנט)' },
-  { id: 'tzionut',    he: 'הציונות הדתית' },
-  { id: 'otzma',      he: 'עוצמה יהודית' },
-  { id: 'mamlachti',  he: 'המחנה הממלכתי (כחול לבן)' },
-  { id: 'shas',       he: 'ש"ס' },
-  { id: 'utj',        he: 'יהדות התורה' },
-  { id: 'beytenu',    he: 'ישראל ביתנו' },
-  { id: 'raam',       he: 'רע"ם' },
-  { id: 'hadash',     he: 'חד"ש-תע"ל' },
-  { id: 'balad',      he: 'בל"ד', outside: true },
-  { id: 'democrats',  he: 'הדמוקרטים' },
-  { id: 'yashar',     he: 'יש"ר' },
-  { id: 'reservists', he: 'המילואימניקים', outside: true }
+// זיהוי עמודות לפי קישור הוויקי שבכותרת שלהן (לא לפי מיקום קבוע). כך הצינור שורד
+// הוספת/הסרת רשימות (מיזוגים, פיצולים, רשימות חדשות כמו "עמך ישראל" או "אחדות")
+// מבלי להישבר: עמודה לא מזוהה מדווחת אוטומטית תחת excluded, ולא "נמצאת" במאגר שלנו.
+const PARTY_PATTERNS = [
+  { re: /^Likud$/,                              id: 'likud',      he: 'הליכוד' },
+  { re: /^Together|Bennett/,                    id: 'bennett',    he: 'ביחד (בנט)' },
+  { re: /Religious Zionist/,                    id: 'tzionut',    he: 'הציונות הדתית' },
+  { re: /Otzma Yehudit/,                        id: 'otzma',      he: 'עוצמה יהודית' },
+  { re: /Blue and White|National Unity \(Israel\)/, id: 'mamlachti', he: 'המחנה הממלכתי (כחול לבן)' },
+  { re: /^Shas$/,                                id: 'shas',       he: 'ש"ס' },
+  { re: /United Torah Judaism/,                  id: 'utj',        he: 'יהדות התורה' },
+  { re: /Yisrael Beiteinu/,                      id: 'beytenu',    he: 'ישראל ביתנו' },
+  { re: /United Arab List|^Ra.?am/,              id: 'raam',       he: 'רע"ם' },
+  { re: /Joint List|Hadash/,                     id: 'hadash',     he: 'חד"ש-תע"ל' },
+  { re: /^Balad$/,                               id: 'balad',      he: 'בל"ד', outside: true },
+  { re: /The Democrats \(Israel\)/,              id: 'democrats',  he: 'הדמוקרטים' },
+  { re: /^Yashar/,                               id: 'yashar',     he: 'יש"ר' },
+  { re: /Reservists/,                            id: 'reservists', he: 'המילואימניקים', outside: true }
 ];
-const MONTHS = { january:1, february:2, march:3, april:4, may:5, june:6, july:7, august:8, september:9, october:10, november:11, december:12 };
+// שמות עבריים ידועים לרשימות חדשות שעדיין אינן במאגר המפלגות שלנו (מוצגות כ-excluded)
+const KNOWN_OUTSIDE_HE = { 'Amcha Yisrael': 'עמך ישראל (וינטר)', 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
+// עמודות ליבה יציבות שחייבות להופיע כדי שנזהה טבלה כטבלת התוצאות הנוכחית (לא טבלת תרחיש/היסטוריה)
+const REQUIRED_CORE = ['likud', 'bennett', 'tzionut', 'otzma', 'mamlachti', 'shas', 'utj', 'beytenu'];
+
+function classifyLink(title) {
+  for (const p of PARTY_PATTERNS) if (p.re.test(title)) return { id: p.id, he: p.he, outside: !!p.outside };
+  return { id: null, he: KNOWN_OUTSIDE_HE[title] || title, outside: true };
+}
 
 function stripRefs(s) { return s.replace(/<ref[^>]*\/>/g, '').replace(/<ref[\s\S]*?<\/ref>/g, ''); }
 function plainText(s) {
@@ -42,6 +49,14 @@ function rowCells(row) {
   return row.split('\n').map(l => l.trim())
     .filter(l => l.startsWith('|') && !l.startsWith('|-') && !l.startsWith('|}'))
     .map(l => l.slice(1));
+}
+// כותרת הטבלה (שורה ראשונה, תאי `!`): מחלץ את הקישור הראשון בכל תא, לפי סדר העמודות בפועל
+function headerLinkCols(headerSeg) {
+  return headerSeg.split('\n').map(l => l.trim())
+    .filter(l => l.startsWith('!'))
+    .map(l => { const m = l.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/); return m ? m[1] : null; })
+    .filter(Boolean)
+    .map(title => ({ title, ...classifyLink(title) }));
 }
 // מפריד קידומת אטריבוטים (style/colspan) מגוף התא, ומזהה: מנדטים / אחוז מתחת לחסימה / ריק
 function parseCell(raw) {
@@ -82,6 +97,7 @@ function parseDate(cell) {
   if (m2) { const mon = MONTHS[m2[2].toLowerCase()]; if (mon) return `${m2[3]}-${String(mon).padStart(2, '0')}-${String(m2[1]).padStart(2, '0')}`; }
   return null;
 }
+const MONTHS = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
 
 const { memo, canonical, tooMany } = require('./_shared');
 
@@ -103,24 +119,24 @@ module.exports = async (req, res) => {
     const revid = j && j.parse && j.parse.revid;
     if (!wt) return { ok: false, error: 'no-wikitext' };
 
-    // איתור טבלת התוצאות: סורקים את כל הטבלאות בעמוד ובוחרים את זו שכותרתה
-    // מכילה את כל עמודות המפלגות בדיוק בסדר הצפוי. ([[Likud]] מופיע גם בטקסט
-    // חופשי בעמוד, לכן אי אפשר לעגן עליו ישירות.) אם אף טבלה לא תואמת —
-    // מבנה המקור השתנה, ומחזירים שגיאה בטוחה במקום נתונים שגויים.
-    let table = null, lastSeen = [];
+    // איתור טבלת התוצאות: סורקים את כל הטבלאות בעמוד ובוחרים את הראשונה שכותרתה
+    // מכילה את כל 8 המפלגות היציבות (ליבה) שתמיד מופיעות בטבלת התוצאות הנוכחית —
+    // לא טבלאות תרחיש/היסטוריה. סדר ומספר שאר העמודות נגזר דינמית מהכותרת בפועל,
+    // כך שרשימות חדשות/שנעלמו לא שוברות את הפירסור. אם אף טבלה לא תואמת —
+    // מבנה המקור השתנה מהותית, ומחזירים שגיאה בטוחה במקום נתונים שגויים.
+    let table = null, partyCols = null, lastSeen = [];
     let idx = 0;
     while (true) {
       const s = wt.indexOf('{|', idx);
       if (s < 0) break;
       const e = wt.indexOf('\n|}', s);
       const seg = wt.slice(s, e > 0 ? e : undefined);
-      const hE = seg.indexOf('{{Opdrts');
-      const hSeg = seg.slice(0, hE > 0 ? hE : 4000);
-      const links = [...hSeg.matchAll(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g)].map(m => m[1]);
-      const seen = [];
-      links.forEach(l => { if (HEADER_ORDER.includes(l) && !seen.includes(l)) seen.push(l); });
-      if (seen.length) lastSeen = seen;
-      if (seen.join('¦') === HEADER_ORDER.join('¦')) { table = seg; break; }
+      const headerEnd = seg.search(/\n\|-/);
+      const headerSeg = seg.slice(0, headerEnd > 0 ? headerEnd : seg.length);
+      const cols = headerLinkCols(headerSeg);
+      const recognizedIds = cols.filter(c => c.id).map(c => c.id);
+      lastSeen = recognizedIds;
+      if (REQUIRED_CORE.every(id => recognizedIds.includes(id))) { table = seg; partyCols = cols; break; }
       idx = e > 0 ? e + 2 : s + 2;
     }
     if (!table) return { ok: false, error: 'source-format-changed', got: lastSeen };
@@ -138,20 +154,21 @@ module.exports = async (req, res) => {
       const publisher = plainText(parsed[1] ? parsed[1].body : '') || '';
 
       let cursor = 0; const seatByCol = {}; const combined = [];
-      for (let ci = 3; ci < parsed.length && cursor < COLS.length; ci++) {
+      for (let ci = 3; ci < parsed.length && cursor < partyCols.length; ci++) {
         const c = parsed[ci];
         if (c.span > 1) {
-          const covered = COLS.slice(cursor, cursor + c.span);
+          const covered = partyCols.slice(cursor, cursor + c.span);
           if (c.seats != null) combined.push({ cols: covered, seats: c.seats });
           cursor += c.span;
         } else {
-          seatByCol[COLS[cursor].id] = c;
+          seatByCol[partyCols[cursor].id || partyCols[cursor].title] = { col: partyCols[cursor], cell: c };
           cursor++;
         }
       }
       const figures = []; const excluded = [];
-      COLS.forEach(col => {
-        const v = seatByCol[col.id];
+      partyCols.forEach(col => {
+        const entry = seatByCol[col.id || col.title];
+        const v = entry && entry.cell;
         if (!v || v.seats == null) return;
         if (col.outside) excluded.push({ name: col.he, seats: v.seats });
         else figures.push({ partyId: col.id, party: col.he, seats: v.seats });

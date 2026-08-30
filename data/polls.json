@@ -3,6 +3,11 @@
   "livePollsFeasibility":"סקרים חדשים נמשכים אוטומטית מעמוד הסקרים של ויקיפדיה (Opinion polling for the 2026 Israeli legislative election) דרך שער אימות אוטומטי, ומסומנים בתג 'חי'. המאגר הידני כאן הוא הבסיס המאומת. שימו לב: עמוד ויקיפדיה מתוחזק בהתנדבות ולעיתים מפגר אחרי הפרסום בתקשורת — לכן סקרים בולטים מתווספים גם ידנית, עם קישור לפרסום המקורי.",
   "polls":[
     {
+      "date":"2026-08-27","pollster":"Filber · Channel 14","sourceUrl":"https://www.c14.co.il/article/1681141",
+      "summary":"הליכוד מזנקת ל‑31; יש\"ר של אייזנקוט נותרת שנייה עם 23. 'עמך ישראל' של עופר וינטר (רשימה חדשה, הושקה 25.8) עוברת את אחוז החסימה עם 4 מנדטים — אינה נכללת בהשוואת המפלגות באתר עדיין. מדגם 981, טעות דגימה כ‑3.1%.",
+      "figures":[{"partyId":"likud","party":"הליכוד","seats":31},{"partyId":"yashar","party":"יש\"ר","seats":23},{"partyId":"shas","party":"ש\"ס","seats":10},{"partyId":"democrats","party":"הדמוקרטים","seats":9},{"partyId":"bennett","party":"ביחד (בנט)","seats":7},{"partyId":"otzma","party":"עוצמה יהודית","seats":7},{"partyId":"utj","party":"יהדות התורה","seats":7},{"partyId":"hadash","party":"חד\"ש-תע\"ל","seats":7},{"partyId":"beytenu","party":"ישראל ביתנו","seats":6},{"partyId":"raam","party":"רע\"ם","seats":5},{"partyId":"tzionut","party":"הציונות הדתית","seats":4}]
+    },
+    {
       "date":"2026-08-13","pollster":"i24NEWS (Direct Polls)","sourceUrl":"https://www.i24news.tv/he/news/israel-elections-2026/polls/artc-26c56d10",
       "summary":"הליכוד מזנקת ל‑30 לקראת הפריימריז; יש\"ר של אייזנקוט שומרת על 23. מדגם 512, טעות דגימה ±4.2%.",
       "figures":[{"partyId":"likud","party":"הליכוד","seats":30},{"partyId":"yashar","party":"יש\"ר","seats":23},{"partyId":"democrats","party":"הדמוקרטים","seats":10},{"partyId":"beytenu","party":"ישראל ביתנו","seats":9},{"partyId":"utj","party":"יהדות התורה","seats":9},{"partyId":"shas","party":"ש\"ס","seats":8},{"partyId":"bennett","party":"ביחד (בנט)","seats":8},{"partyId":"otzma","party":"עוצמה יהודית","seats":7},{"partyId":"hadash","party":"חד\"ש-תע\"ל","seats":6},{"partyId":"tzionut","party":"הציונות הדתית","seats":5},{"partyId":"raam","party":"רע\"ם","seats":5}]
