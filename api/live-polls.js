@@ -14,6 +14,7 @@ const PARTY_PATTERNS = [
   { re: /^Likud$/,                              id: 'likud',      he: 'הליכוד' },
   { re: /^Together|Bennett/,                    id: 'bennett',    he: 'ביחד (בנט)' },
   { re: /Religious Zionist/,                    id: 'tzionut',    he: 'הציונות הדתית' },
+  { re: /^Zehut$/,                               id: 'tzionut',    he: 'זהות (פייגלין)' },
   { re: /Otzma Yehudit/,                        id: 'otzma',      he: 'עוצמה יהודית' },
   { re: /Blue and White|National Unity \(Israel\)/, id: 'mamlachti', he: 'המחנה הממלכתי (כחול לבן)' },
   { re: /^Shas$/,                                id: 'shas',       he: 'ש"ס' },
@@ -25,7 +26,8 @@ const PARTY_PATTERNS = [
   { re: /The Democrats \(Israel\)/,              id: 'democrats',  he: 'הדמוקרטים' },
   { re: /^Yashar/,                               id: 'yashar',     he: 'יש"ר' },
   { re: /Amcha Yisrael/,                         id: 'amcha',      he: 'עמך ישראל' },
-  { re: /Reservists/,                            id: 'beittzioni', he: 'בית ציוני – המילואימניקים' }
+  { re: /^The Reservists/,                       id: 'hendelzelikha', he: 'יועז הנדל' },
+  { re: /New Economic Party/,                    id: 'hendelzelikha', he: 'ירון זליכה' }
 ];
 // שמות עבריים ידועים לרשימות חדשות שעדיין אינן במאגר המפלגות שלנו (מוצגות כ-excluded)
 const KNOWN_OUTSIDE_HE = { 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
@@ -51,13 +53,20 @@ function rowCells(row) {
     .filter(l => l.startsWith('|') && !l.startsWith('|-') && !l.startsWith('|}'))
     .map(l => l.slice(1));
 }
-// כותרת הטבלה (שורה ראשונה, תאי `!`): מחלץ את הקישור הראשון בכל תא, לפי סדר העמודות בפועל
+// כותרת הטבלה (שורה ראשונה, תאי `!`): מחלץ את קישורי כל תא, לפי סדר העמודות בפועל.
+// תא כותרת עם colspan (כמו איחוד טכני של שתי רשימות תחת כותרת משותפת) מכיל בד"כ קישור
+// לכל רשימה בנפרד — מרחיבים אותו למספר עמודות תואם ל-colspan כדי לא להזיז את שאר המיפוי.
 function headerLinkCols(headerSeg) {
   return headerSeg.split('\n').map(l => l.trim())
     .filter(l => l.startsWith('!'))
-    .map(l => { const m = l.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/); return m ? m[1] : null; })
-    .filter(Boolean)
-    .map(title => ({ title, ...classifyLink(title) }));
+    .flatMap(l => {
+      const spanM = l.match(/colspan="?(\d+)/);
+      const span = spanM ? parseInt(spanM[1], 10) : 1;
+      const titles = [...l.matchAll(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g)].map(m => m[1]);
+      if (!titles.length) return [];
+      while (titles.length < span) titles.push(titles[titles.length - 1]);
+      return titles.slice(0, span).map(title => ({ title, ...classifyLink(title) }));
+    });
 }
 // מפריד קידומת אטריבוטים (style/colspan) מגוף התא, ומזהה: מנדטים / אחוז מתחת לחסימה / ריק
 function parseCell(raw) {
