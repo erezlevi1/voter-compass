@@ -30,7 +30,7 @@ const PARTY_PATTERNS = [
   { re: /New Economic Party/,                    id: 'hendelzelikha', he: 'ירון זליכה' }
 ];
 // שמות עבריים ידועים לרשימות חדשות שעדיין אינן במאגר המפלגות שלנו (מוצגות כ-excluded)
-const KNOWN_OUTSIDE_HE = { 'Unity (Israel)': 'אחדות (ארדן-אדלשטיין)' };
+const KNOWN_OUTSIDE_HE = { 'Unity (Israel)': 'האחדות (ארדן-אדלשטיין)', 'Haredi Public': 'הציבור החרדי' };
 // עמודות ליבה יציבות שחייבות להופיע כדי שנזהה טבלה כטבלת התוצאות הנוכחית (לא טבלת תרחיש/היסטוריה)
 const REQUIRED_CORE = ['likud', 'bennett', 'tzionut', 'otzma', 'mamlachti', 'shas', 'utj', 'beytenu'];
 
@@ -99,14 +99,16 @@ function parseDate(cell) {
   const m = cell.match(/\{\{\s*Opdrts\s*\|([^}]*)\}\}/i);
   if (m) {
     const parts = m[1].split('|').map(x => x.trim()).filter(Boolean);
-    const year = parts[parts.length - 1], mon = MONTHS[(parts[parts.length - 2] || '').toLowerCase()], day = parts[parts.length - 3];
+    const year = parts[parts.length - 1], mon = monthNum(parts[parts.length - 2]), day = parts[parts.length - 3];
     if (year && mon && day) return `${year}-${String(mon).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
   const t = plainText(cell);
   const m2 = t.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
-  if (m2) { const mon = MONTHS[m2[2].toLowerCase()]; if (mon) return `${m2[3]}-${String(mon).padStart(2, '0')}-${String(m2[1]).padStart(2, '0')}`; }
+  if (m2) { const mon = monthNum(m2[2]); if (mon) return `${m2[3]}-${String(mon).padStart(2, '0')}-${String(m2[1]).padStart(2, '0')}`; }
   return null;
 }
+// מקבל גם שם מלא ('October') וגם קיצור ('Oct') — ויקיפדיה משתמשת בשניהם בתבנית Opdrts
+const monthNum = (n) => MONTHS[String(n || '').toLowerCase()] || MONTHS[Object.keys(MONTHS).find(k => String(n || '').length >= 3 && k.startsWith(String(n).toLowerCase().slice(0, 3)))];
 const MONTHS = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
 
 const { memo, canonical, tooMany } = require('./_shared');
